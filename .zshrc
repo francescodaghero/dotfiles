@@ -70,7 +70,11 @@ ZSH_THEME="philips"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git themes tmux vi-mode)
+plugins=(git themes tmux vi-mode
+        #zsh-interactive-cd
+        #zsh-autosuggestions
+        fzf-tab
+        )
 
 source $ZSH/oh-my-zsh.sh
 
@@ -85,11 +89,11 @@ unsetopt caseglob                             #
 export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='mvim'
-# fi
+if [[ -n $SSH_CONNECTION ]]; then
+  export EDITOR='nvim'
+else
+  export EDITOR='nvim'
+fi
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -103,7 +107,27 @@ export LANG=en_US.UTF-8
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 source "$HOME/.bash_aliases"
+
 # LS_COLORS
 . "$HOME/.local/share/lscolors.sh"
 
+# FZF
+export FZF_DEFAULT_OPTS='--height 50% --layout=reverse --border' #Aspetto
+export FZF_DEFAULT_COMMAND='rg --hidden --ignore .git -l ""' #Ripgrep
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+# FZF - TAB
+# https://github.com/Aloxaf/fzf-tab/wiki/Configuration
+# disable sort when completing options of any command
+zstyle ':completion:complete:*:options' sort false
+
+# set descriptions format to enable group support
+zstyle ':completion:*:descriptions' format '[%d]'
+
+# set list-colors to enable filename colorizing
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+
+# switch group using `,` and `.`
+zstyle ':fzf-tab:*' switch-group ',' '.'
+zstyle ':fzf-tab:*' prefix ''
+setopt glob_dots
