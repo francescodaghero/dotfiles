@@ -12,7 +12,7 @@ MAPPINGS = (
         #From:To
         (".scripts",f"{HOME}/.scripts"),
         (".zshrc",f"{HOME}/.zshrc"),
-        (".oh-my-zsh/custom",f"{HOME}/.oh-my-zsh/custom"),
+        #(".oh-my-zsh/custom",f"{HOME}/.oh-my-zsh/custom"),
         (".tmux.conf",f"{HOME}/.tmux.conf"),
         (".config/nvim",f"{HOME}/.config/nvim"),
         (".config/lf",f"{HOME}/.config/lf")
