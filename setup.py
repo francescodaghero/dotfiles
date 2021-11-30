@@ -24,7 +24,10 @@ EXECUTABLES = (
         ('zsh', 'Zsh'),
         ('lf', 'Lf file manager'),
         ('nvim', 'Neovim'),
-        ('bat', 'Bat')
+        ('bat', 'Bat'),
+        ('fzf', 'Fzf'),
+        ('rg', 'Ripgrep')
+
 )
 
 DATA = (
