@@ -74,6 +74,7 @@ plugins=(git themes tmux vi-mode
         #zsh-interactive-cd
         #zsh-autosuggestions
         fzf-tab
+        zsh-syntax-highlighting
         )
 
 source $ZSH/oh-my-zsh.sh
