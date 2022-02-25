@@ -1,6 +1,7 @@
 import os
 import shutil
 from datetime import datetime
+from glob import glob
 
 ERROR_MESSAGE='xxx Error xxx'
 SUCCESS_MESSAGE='~~~ Success ~~~'
@@ -8,14 +9,21 @@ REINSTALL = True
 
 HOME=os.path.expanduser('~')
 BACKUP_FOLDER=f"{HOME}/.backup"
+
+# Symlink the folders
 MAPPINGS = (
         #From:To
         (".scripts",f"{HOME}/.scripts"),
         (".zshrc",f"{HOME}/.zshrc"),
-        #(".oh-my-zsh/custom",f"{HOME}/.oh-my-zsh/custom"),
         (".tmux.conf",f"{HOME}/.tmux.conf"),
         (".config/nvim",f"{HOME}/.config/nvim"),
         (".config/lf",f"{HOME}/.config/lf")
+)
+
+# Symlink all the subfolders, without overwriting 
+SUB_MAPPINGS = (
+        #From: To
+        (".oh-my-zsh/custom/plugins/",f"{HOME}/.oh-my-zsh/custom/plugins/"),
 )
 
 # Dependencies
@@ -67,6 +75,17 @@ def symlink(full_path, output_path):
     abs_full_path=os.path.abspath(full_path)
     os.symlink(abs_full_path, output_path)
 
+def symlink_subelements(full_path, output_path, max_depth=0):
+    path_at_depth=glob(os.path.join(full_path,*["*" for _ in
+        range(max_depth+1)]))
+    folders_at_depth=filter(os.path.isdir, path_at_depth)
+    for folder in folders_at_depth:
+        destination_folder=folder.replace(full_path,"")
+        output_path_folder=os.path.join(output_path,destination_folder)
+        symlink(folder, output_path_folder)
+
+
+
 def check_install(exec_name):
     """Check whether `name` is on PATH and marked as executable.
     """
@@ -103,15 +122,18 @@ def check_dependencies(executables, data):
 
 
 
-def setup(mappings):
+def setup(mappings, sub_folder_mappings):
     print("Starting the setup...")
     for source, target in mappings:
         if has_previous_version(target):
             backup(target,BACKUP_FOLDER)
         symlink(source, target)
+    for source, target in sub_folder_mappings:
+        symlink_subelements(source, target)
+
     print("Setup successful")
 
 if __name__=='__main__':
     check_dependencies(EXECUTABLES, DATA)
-    setup(MAPPINGS)
+    setup(MAPPINGS, SUB_MAPPINGS)
 

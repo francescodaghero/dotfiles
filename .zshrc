@@ -75,6 +75,8 @@ plugins=(git themes tmux vi-mode
         #zsh-autosuggestions
         fzf-tab
         zsh-syntax-highlighting
+        poetry
+        poetry_shell
         )
 
 source $ZSH/oh-my-zsh.sh
@@ -108,6 +110,9 @@ fi
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 source "$HOME/.bash_aliases"
+
+# Funzioni
+source "$HOME/"
 
 # LS_COLORS
 . "$HOME/.local/share/lscolors.sh"
