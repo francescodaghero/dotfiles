@@ -1,4 +1,39 @@
-" Basic Setup
+" Plugin Management
+call plug#begin('~/.vim/plugged')
+        Plug 'https://github.com/vim-airline/vim-airline' " Barra airline
+        Plug 'https://github.com/vim-airline/vim-airline-themes' "Temi per airline
+        Plug 'https://github.com/preservim/vimux' " comandi direttamente da vim
+        Plug 'https://github.com/edkolev/tmuxline.vim' " tmux rapido
+        Plug 'dracula/vim', { 'as': 'dracula' }
+        Plug 'puremourning/vimspector' " Debugging
+call plug#end()
+
+" Cursore
+let &t_SI = "\e[6 q"
+let &t_EI = "\e[2 q"
+set ttimeout "Delay del passaggio blocco -> linea
+set ttimeoutlen=1
+set ttyfast
+
+" Plugin Setup
+let g:vimspector_enable_mappings = "HUMAN"
+
+" Tema
+" colorscheme dracula
+
+" Vimux
+" Run command
+map <Leader>vp :VimuxPromptCommand<CR>
+map <Leader>vl :VimuxRunLastCommand<CR>
+map <Leader>vi :VimuxInspectRunner<CR>
+map <Leader>vz :VimuxZoomRunner<CR>
+
+" Airline e temi
+let g:airline_theme='angr'
+let g:airline_powerline_fonts = 0
+
+"""""""""""""""""""""""""
+""""""""""""" Basic Setup
 
 " Encoding
 set encoding=utf-8
@@ -8,10 +43,10 @@ set noerrorbells
 " Rimuovi trailing spaces quando salvi
 " autocmd BufWritePre * :%s/\s\+$//e
 " Toggle spellcheck
-:map <F5> :setlocal spell! spelllang=en_us<CR>
+:map <F9> :setlocal spell! spelllang=en_us<CR>
 " Smart autocomplete
-filetype plugin on
-set omnifunc=syntaxcomplete#Complete
+" filetype plugin on
+"set omnifunc=syntaxcomplete#Complete
 
 " Tabs
 set tabstop=4
@@ -39,13 +74,13 @@ set nobackup
 set undodir=~/.vim/undodir
 set undofile
 " Search
-set incsearch
+"set incsearch
 
 " FILE FINDING
 " Search in all subfolders
-set path+=**
+" set path+=**
 " Display all matching file when tab complete
-set wildmenu
+" set wildmenu
 
 " COMMANDS
 " - :find file -> shows ./file and ./folder/file. Pick one with tab key
@@ -82,7 +117,4 @@ let g:netrw_list_hide.=',\(^\|\s\s\)\zs\.\S\+'
 " - :e a folder to open the file browser
 " - <CR>/v/t to open in an h-split/v-split/tab
 " - more mapping at |netrw-browse-maps|
-
-" SNIPPETS
-" nnoremap {snippetname} :-1read path/to/snippet
 

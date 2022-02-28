@@ -16,7 +16,7 @@ MAPPINGS = (
         (".scripts",f"{HOME}/.scripts"),
         (".zshrc",f"{HOME}/.zshrc"),
         (".tmux.conf",f"{HOME}/.tmux.conf"),
-        (".config/nvim",f"{HOME}/.config/nvim"),
+        (".vimrc",f"{HOME}/.vimrc"),
         (".config/lf",f"{HOME}/.config/lf")
 )
 
@@ -24,6 +24,7 @@ MAPPINGS = (
 SUB_MAPPINGS = (
         #From: To
         (".oh-my-zsh/custom/plugins/",f"{HOME}/.oh-my-zsh/custom/plugins/"),
+        ("modules/",f"{HOME}/.config/")
 )
 
 # Dependencies
@@ -31,16 +32,15 @@ EXECUTABLES = (
         # Executable name, path
         ('zsh', 'Zsh'),
         ('lf', 'Lf file manager'),
-        ('nvim', 'Neovim'),
+        ('vim', 'Vim'),
         ('bat', 'Bat'),
         ('fzf', 'Fzf'),
         ('rg', 'Ripgrep')
-
 )
 
 DATA = (
         (f'{HOME}/.oh-my-zsh','Oh-My-Zsh'),
-        (f'{HOME}/.local/share/lscolors.sh','LS-COLORS')
+        #(f'{HOME}/.local/share/lscolors.sh','LS-COLORS')
 )
 
 def has_previous_version(full_path):
@@ -90,14 +90,14 @@ def check_install(exec_name):
     """Check whether `name` is on PATH and marked as executable.
     """
     is_installed= shutil.which(exec_name) is not None
-    print(ERROR_MSG if not is_installed else SUCCESS_MESSAGE)
+    print(ERROR_MESSAGE if not is_installed else SUCCESS_MESSAGE)
     return is_installed
 
 def check_existance(exec_name):
     """Check whether `name` is on PATH and marked as executable.
     """
     is_installed= shutil.which(exec_name) is not None
-    print(ERROR_MSG if not is_installed else SUCCESS_MESSAGE)
+    print(ERROR_MESSAGE if not is_installed else SUCCESS_MESSAGE)
     return is_installed
 
 
@@ -116,7 +116,7 @@ def check_dependencies(executables, data):
     for position, name in data:
         print(f'>> {name}')
         is_present= os.path.exists(position)
-        print(ERROR_MSG if not is_present else SUCCESS_MESSAGE)
+        print(ERROR_MESSAGE if not is_present else SUCCESS_MESSAGE)
         assert is_present, "Missing dependency, stopping execution..."
     print("All dependencies are met")
 
@@ -130,7 +130,8 @@ def setup(mappings, sub_folder_mappings):
         symlink(source, target)
     for source, target in sub_folder_mappings:
         symlink_subelements(source, target)
-
+    if "vim" in mappings:
+        os.makedirs(f"{HOME}/.vim/undodir", exist_ok=True)
     print("Setup successful")
 
 if __name__=='__main__':
