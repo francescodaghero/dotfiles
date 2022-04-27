@@ -7,8 +7,11 @@ call plug#begin('~/.vim/plugged')
         Plug 'dracula/vim', { 'as': 'dracula' }
         " Linting/Autocomplete
         Plug 'dense-analysis/ale'
+        Plug 'https://github.com/numirias/semshi'
         " Python
         Plug 'vim-scripts/indentpython.vim'
+        "
+        Plug 'https://github.com/luochen1990/rainbow.git'
 call plug#end()
 
 
@@ -18,6 +21,7 @@ source ~/.config/nvim/plugins.vim
 source ~/.config/nvim/general.vim
 " Impostazioni specifiche per file
 source ~/.config/nvim/filetype.vim
+
 
 
 
