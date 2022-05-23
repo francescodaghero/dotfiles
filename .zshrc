@@ -71,7 +71,6 @@ ZSH_THEME="philips"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git themes vi-mode
-        fzf
         fzf-tab
         zsh-syntax-highlighting
         zsh-interactive-cd
@@ -83,6 +82,13 @@ plugins=(git themes vi-mode
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
+# History
+setopt HIST_IGNORE_ALL_DUPS
+setopt INC_APPEND_HISTORY
+setopt EXTENDED_HISTORY
+setopt SHARE_HISTORY
+export SAVEHIST=10000000
+export HISTSIZE=10000000
 
 #-----------------Globbing--------------------#
 setopt extendedglob                           #
@@ -116,9 +122,10 @@ fi
 source "$HOME/.scripts"
 
 # LS_COLORS
-. "$HOME/.config/LS_COLORS/lscolors.sh"
+. "$HOME/.local/share/lscolors.sh"
 
 # FZF
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_OPTS='--height 50% --layout=reverse --border' #Aspetto
 export FZF_DEFAULT_COMMAND='rg --hidden --ignore .git -l ""' #Ripgrep
 
