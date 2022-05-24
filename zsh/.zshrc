@@ -122,7 +122,7 @@ fi
 source "$HOME/.scripts"
 
 # LS_COLORS
-. "$HOME/.local/share/lscolors.sh"
+. "$HOME/.scripts/LS_COLORS/lscolors.sh"
 
 # FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

@@ -1,4 +1,0 @@
-set previewer ~/.scripts/lf/preview.sh
-
-set shell zsh
-set drawbox
