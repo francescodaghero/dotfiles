@@ -1,5 +1,49 @@
 #+title: Emacs Configuration
 #+PROPERTY: header-args:emacs-lisp :tangle ./init.el :mkdirp yes
+* Contents :TOC:QUOTE:
+#+BEGIN_QUOTE
+- [[#early-init][Early-Init]]
+  - [[#cache-e-directory-di-supporto][Cache e directory di supporto]]
+  - [[#garbage-collector-e-warnings][Garbage collector e warnings]]
+  - [[#ui-tweaks][UI tweaks]]
+  - [[#startup-speedup][Startup speedup]]
+- [[#emacs-literate-config-file][Emacs literate config file]]
+- [[#startup-config][Startup config]]
+  - [[#loading-time][Loading time]]
+  - [[#configurazione-package-manager][Configurazione package manager]]
+  - [[#pulizia-cartella-emacsd][Pulizia cartella .emacs.d]]
+  - [[#garbage-collection][Garbage collection]]
+  - [[#package-updates][Package updates]]
+- [[#main-config][Main config]]
+- [[#ui][UI]]
+  - [[#tema][Tema]]
+  - [[#modeline][Modeline]]
+  - [[#parentesi][Parentesi]]
+- [[#evil][Evil]]
+  - [[#evil-undo][Evil-undo]]
+  - [[#evil][Evil]]
+  - [[#evil-collection-e-setup][Evil-collection e setup]]
+  - [[#folding][Folding]]
+- [[#keybinds][Keybinds]]
+  - [[#general-el-keybinds-con-prefisso][General-el: keybinds con prefisso]]
+  - [[#transient-keybinds-con-menu][Transient: keybinds con menu]]
+- [[#formattazione-e-pulizia-file][Formattazione e pulizia file]]
+  - [[#testo][Testo]]
+  - [[#specifico-per-estensione][Specifico per estensione]]
+- [[#completion-frameworks][Completion frameworks]]
+  - [[#vertico][Vertico]]
+- [[#org-mode][Org mode]]
+  - [[#funzioni-per-lagenda-con-org-roam][Funzioni per l'agenda con org-roam]]
+  - [[#org-package][Org package]]
+  - [[#super-agenda][Super agenda]]
+  - [[#table-of-contents][Table-of-contents]]
+  - [[#ui][UI]]
+- [[#org-roam][Org roam]]
+  - [[#funzioni-di-appoggio][Funzioni di appoggio]]
+  - [[#configurazione][Configurazione]]
+- [[#variabili-locali][Variabili locali]]
+#+END_QUOTE
+
 * Early-Init
 Configurazioni da caricare il prima possibile nel file early-init.el
 #+begin_src emacs-lisp :tangle early-init.el
@@ -214,7 +258,7 @@ Da caricare prima di evil per avere una funzione di undo avanzata
   :after undo-fu
   :init	
   ;; Vim-like
-  ;;(general-evil-setup)
+  (general-evil-setup)
   ;; Spostamenti
   (setq evil-want-integration t) ;; TODO: Capire cosa fa
   (setq evil-want-keybinding nil) ;; TODO: Capire cosa fa
@@ -270,9 +314,9 @@ Un package che aggiunge keybinds basati su evil per multipli altri packages
 * Keybinds
 ** General-el: keybinds con prefisso
 Aggiunge keybinds con prefisso e vari hook, disattivato per il momento
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp 
+
 (use-package general
-  :disabled
   :ensure t
   :after evil
   :config
@@ -290,9 +334,19 @@ Aggiunge keybinds con prefisso e vari hook, disattivato per il momento
     ;;"oa" '(org-agenda :which-key "Agenda")
     ))
 #+end_src
-** Transient: keybinds con menu
-Alternativa complessa a general, in fase di test
+Which-key permette di mostrare in un menu ogni keybind, da rivedere
 #+begin_src emacs-lisp
+(use-package which-key
+  :ensure t
+  :after general
+  :config
+  (which-key-mode)
+)
+#+end_src
+
+** Transient: keybinds con menu
+Alternativa complessa a general, in fase di test, disabilitata per ora
+#+begin_src emacs-lisp :tangle no
 (use-package transient
   :ensure t
   :after evil
@@ -492,7 +546,7 @@ Per il momento nulla.
 ** Configurazione
 Momentaneamente disattivato, forse troppo scomodo
 *** Init
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp 
 (use-package org-roam
   :ensure
   :demand t
@@ -505,7 +559,7 @@ Momentaneamente disattivato, forse troppo scomodo
   :config
 #+end_src
 *** Config
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
   (require 'org-roam-dailies)
   (org-roam-db-autosync-mode))
 #+end_src

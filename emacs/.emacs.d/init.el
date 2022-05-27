@@ -124,7 +124,7 @@
   :after undo-fu
   :init	
   ;; Vim-like
-  ;;(general-evil-setup)
+  (general-evil-setup)
   ;; Spostamenti
   (setq evil-want-integration t) ;; TODO: Capire cosa fa
   (setq evil-want-keybinding nil) ;; TODO: Capire cosa fa
@@ -171,38 +171,29 @@
   (global-evil-vimish-fold-mode)
  )
 
-(use-package transient
+(use-package general
   :ensure t
   :after evil
   :config
-  (define-transient-command org-roam-transient ()
-    "Buffers"
-    ["Suffixes"
-     ("i" "Insert" org-roam-node-insert :transient nil)
-     ("o" "Open" org-roam-node-open :transient nil)
-     ("f" "Find" org-roam-node-find :transient nil)
-    ])
-  (define-transient-command org-transient ()
-    ["Suffixes"
-     ("c" "Cycle" org-cycle :transient nil)
-    ])
-  (define-transient-command buffers-transient ()
-    "Buffers"
-    ["Suffixes"
-     ("e" "Eval" eval-buffer :transient nil)]
-    )
-  (define-transient-command general-transient ()
-    "Main Menu"
-    ["Suffixes"
-     ("a" "Agenda" org-agenda :transient nil)
-     ("c" "Config" (lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :transient nil)
-     ("SPC" "Find file" find-file :transient nil)]
-    ["Nested"
-     ("b" "Buffer" buffers-transient)
-     ("o" "Org" org-transient)]
-    ) 
-  (define-key evil-insert-state-map (kbd "C-SPC") 'general-transient)
-  (define-key evil-normal-state-map (kbd "SPC") 'general-transient) ;; TODO Kill the buffer with ESC
+  (general-define-key
+   :states '(normal visual insert emacs)
+   :prefix "SPC"
+   :non-normal-prefix "C-SPC"
+    "c" '((lambda () (interactive) (find-file user-init-file)) :which-key "Open Configuration")
+    "a" '(org-agenda :which-key "Agenda")
+    "SPC" '(find-file :which-key "Find file")
+    ;; Buffers
+    "b" '(:ignore t :which-key "Buffers")
+    "be" '(eval-buffer :which-key "Eval")
+    ;;"o" '(:ignore t :which-key "Org")
+    ;;"oa" '(org-agenda :which-key "Agenda")
+    ))
+
+(use-package which-key
+  :ensure t
+  :after general
+  :config
+  (which-key-mode)
 )
 
 (use-package ws-butler
@@ -305,3 +296,17 @@
 (use-package toc-org
   :ensure t
 )
+
+(use-package org-roam
+  :ensure
+  :demand t
+  :defer 1
+  :custom
+  (org-roam-directory org-agenda-base)
+  (org-roam-completion-everywhere t)
+  (org-roam-completion-system 'default)
+  (org-roam-dailies-directory "journals")
+  :config
+
+  (require 'org-roam-dailies)
+  (org-roam-db-autosync-mode))
