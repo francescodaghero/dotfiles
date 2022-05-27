@@ -142,3 +142,5 @@ zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':fzf-tab:*' switch-group ',' '.'
 zstyle ':fzf-tab:*' prefix ''
 setopt glob_dots
+# Direnv
+eval "$(direnv hook zsh)"
