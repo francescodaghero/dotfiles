@@ -87,7 +87,7 @@ Istruzioni trovate nel README del package no-littering
 ;; Fast-startup
 (setq package-enable-at-startup nil)
 (setq package-quickstart t)
-(setq frame-inhibit-implied-resize t)
+;;(setq frame-inhibit-implied-resize t)
 (advice-add #'x-apply-session-resources :override #'ignore)
 #+end_src
 
@@ -138,6 +138,18 @@ Init e configurazione di use-package
    (setq use-package-hook-name-suffix nil))
 (eval-when-compile
         (require 'use-package))
+#+end_src
+** Variabili shell
+Su MacOs lanciando l'app di Emacs non vengono viste le variabili nello .zprofile
+#+begin_src emacs-lisp
+;;(use-package exec-path-from-shell
+;;   :ensure t)
+;;(when (daemonp)
+;;  (exec-path-from-shell-initialize))
+;;(when (memq window-system '(mac ns x))
+;;  (exec-path-from-shell-initialize))
+;;(dolist (var '("SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO" "LANG" "LC_CTYPE" "NIX_SSL_CERT_FILE" "NIX_PATH"))
+;;  (add-to-list 'exec-path-from-shell-variables var))
 #+end_src
 ** Pulizia cartella .emacs.d
 Packages per mantenere la cartella .emacs.d pulita ed installare tutto nella .cache
@@ -314,9 +326,9 @@ Un package che aggiunge keybinds basati su evil per multipli altri packages
 * Keybinds
 ** General-el: keybinds con prefisso
 Aggiunge keybinds con prefisso e vari hook, disattivato per il momento
-#+begin_src emacs-lisp 
+#+begin_src emacs-lisp
 
-(use-package general
+(use-package general 
   :ensure t
   :after evil
   :config
@@ -324,7 +336,7 @@ Aggiunge keybinds con prefisso e vari hook, disattivato per il momento
    :states '(normal visual insert emacs)
    :prefix "SPC"
    :non-normal-prefix "C-SPC"
-    "c" '((lambda () (interactive) (find-file user-init-file)) :which-key "Open Configuration")
+    "c" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
     "a" '(org-agenda :which-key "Agenda")
     "SPC" '(find-file :which-key "Find file")
     ;; Buffers
@@ -340,6 +352,7 @@ Which-key permette di mostrare in un menu ogni keybind, da rivedere
   :ensure t
   :after general
   :config
+  (setq which-key-sort-order 'which-key-prefix-then-key-order)
   (which-key-mode)
 )
 #+end_src
@@ -564,6 +577,26 @@ Momentaneamente disattivato, forse troppo scomodo
   (org-roam-db-autosync-mode))
 #+end_src
 
+* Ledger
+#+begin_src emacs-lisp
+(use-package ledger-mode
+  :ensure t
+  :mode ("\\.dat\\'"
+         "\\.ledger\\'")
+  :config
+  (add-hook 'ledger-mode-hook #'ledger-flymake-enable)
+)
+#+end_src
+** Evil Ledger
+#+begin_src emacs-lisp
+(use-package evil-ledger
+  :ensure t
+  :after ledger-mode
+  :config
+  (setq evil-ledger-sort-key "S")
+  (add-hook 'ledger-mode-hook #'evil-ledger-mode))
+#+end_src
+* Bibtex
 * Variabili locali
 
 Codice che abilitia il tangle-on-save e il reload di emacs quando si salva.

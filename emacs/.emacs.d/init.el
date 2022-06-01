@@ -32,6 +32,15 @@
 (eval-when-compile
         (require 'use-package))
 
+;;(use-package exec-path-from-shell
+;;   :ensure t)
+;;(when (daemonp)
+;;  (exec-path-from-shell-initialize))
+;;(when (memq window-system '(mac ns x))
+;;  (exec-path-from-shell-initialize))
+;;(dolist (var '("SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO" "LANG" "LC_CTYPE" "NIX_SSL_CERT_FILE" "NIX_PATH"))
+;;  (add-to-list 'exec-path-from-shell-variables var))
+
 (use-package no-littering
   :ensure
   :config
@@ -171,7 +180,7 @@
   (global-evil-vimish-fold-mode)
  )
 
-(use-package general
+(use-package general 
   :ensure t
   :after evil
   :config
@@ -179,7 +188,7 @@
    :states '(normal visual insert emacs)
    :prefix "SPC"
    :non-normal-prefix "C-SPC"
-    "c" '((lambda () (interactive) (find-file user-init-file)) :which-key "Open Configuration")
+    "c" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
     "a" '(org-agenda :which-key "Agenda")
     "SPC" '(find-file :which-key "Find file")
     ;; Buffers
@@ -193,6 +202,7 @@
   :ensure t
   :after general
   :config
+  (setq which-key-sort-order 'which-key-prefix-then-key-order)
   (which-key-mode)
 )
 
@@ -310,3 +320,18 @@
 
   (require 'org-roam-dailies)
   (org-roam-db-autosync-mode))
+
+(use-package ledger-mode
+  :ensure t
+  :mode ("\\.dat\\'"
+         "\\.ledger\\'")
+  :config
+  (add-hook 'ledger-mode-hook #'ledger-flymake-enable)
+)
+
+(use-package evil-ledger
+  :ensure t
+  :after ledger-mode
+  :config
+  (setq evil-ledger-sort-key "S")
+  (add-hook 'ledger-mode-hook #'evil-ledger-mode))

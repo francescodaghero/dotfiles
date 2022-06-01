@@ -29,5 +29,5 @@
 ;; Fast-startup
 (setq package-enable-at-startup nil)
 (setq package-quickstart t)
-(setq frame-inhibit-implied-resize t)
+;;(setq frame-inhibit-implied-resize t)
 (advice-add #'x-apply-session-resources :override #'ignore)
