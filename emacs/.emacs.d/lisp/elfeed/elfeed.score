@@ -1,0 +1,22 @@
+;;;Elfeed score file                                     -*- lisp -*-
+((version 10)
+("title-or-content"
+  (:text "embedded" :title-value 150 :content-value 100 :type s)
+  (:text "adaptive" :title-value 250 :content-value 100 :type s)
+  (:text "pruning" :title-value 50 :content-value 30 :type s)
+  (:text "quantization" :title-value 75 :content-value 50 :type s)
+  (:text "dynamic" :title-value 75 :content-value 50 :type s)
+  (:text "deep learning" :title-value 75 :content-value 50 :type s)
+  (:text "Deep" :title-value 400 :content-value 50 :type s)
+)
+("authors"
+ (:text "Pagliari" :value 500 :type s)
+ (:text "Risso" :value 500 :type s)
+ (:text "Burrello" :value 500 :type s)
+ (:text "Benini" :value 500 :type s)
+ (:text "Lecunn" :value 500 :type s)
+ )
+ ("link"
+  (:text "doi" :value 1000 :type s)
+  )
+)

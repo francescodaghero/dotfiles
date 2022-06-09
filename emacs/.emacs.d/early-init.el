@@ -1,6 +1,9 @@
 ;;; -*- lexical-binding: t; -*-
 ; File generato automaticamente da emacs.org
 
+(push "~/.emacs.d/lisp/elfeed/" load-path)
+(setq emacs-original-dir user-emacs-directory)
+
 (setq user-emacs-directory "~/.cache/emacs")
 (setq package-user-dir "~/.cache/emacs/packages")
 
@@ -29,5 +32,5 @@
 ;; Fast-startup
 (setq package-enable-at-startup nil)
 (setq package-quickstart t)
-;;(setq frame-inhibit-implied-resize t)
+(setq frame-inhibit-implied-resize t)
 (advice-add #'x-apply-session-resources :override #'ignore)

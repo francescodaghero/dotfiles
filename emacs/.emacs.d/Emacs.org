@@ -10,23 +10,27 @@
 - [[#emacs-literate-config-file][Emacs literate config file]]
 - [[#startup-config][Startup config]]
   - [[#loading-time][Loading time]]
-  - [[#configurazione-package-manager][Configurazione package manager]]
+  - [[#package-manager][Package Manager]]
   - [[#pulizia-cartella-emacsd][Pulizia cartella .emacs.d]]
   - [[#garbage-collection][Garbage collection]]
   - [[#package-updates][Package updates]]
 - [[#main-config][Main config]]
+  - [[#tramp][Tramp]]
+  - [[#macos][Macos]]
 - [[#ui][UI]]
   - [[#tema][Tema]]
   - [[#modeline][Modeline]]
   - [[#parentesi][Parentesi]]
 - [[#evil][Evil]]
-  - [[#evil-undo][Evil-undo]]
+  - [[#evil-undo-fo][Evil-undo-fo]]
   - [[#evil][Evil]]
   - [[#evil-collection-e-setup][Evil-collection e setup]]
+  - [[#evil-agenda][Evil-agenda]]
   - [[#folding][Folding]]
 - [[#keybinds][Keybinds]]
   - [[#general-el-keybinds-con-prefisso][General-el: keybinds con prefisso]]
   - [[#transient-keybinds-con-menu][Transient: keybinds con menu]]
+  - [[#general-keybinds][General keybinds]]
 - [[#formattazione-e-pulizia-file][Formattazione e pulizia file]]
   - [[#testo][Testo]]
   - [[#specifico-per-estensione][Specifico per estensione]]
@@ -38,9 +42,31 @@
   - [[#super-agenda][Super agenda]]
   - [[#table-of-contents][Table-of-contents]]
   - [[#ui][UI]]
+- [[#file-browsing][File browsing]]
+  - [[#dired][Dired]]
+  - [[#openfile][OpenFile]]
 - [[#org-roam][Org roam]]
   - [[#funzioni-di-appoggio][Funzioni di appoggio]]
   - [[#configurazione][Configurazione]]
+- [[#ledger][Ledger]]
+  - [[#evil-ledger][Evil Ledger]]
+- [[#bibtex][Bibtex]]
+- [[#git][Git]]
+  - [[#magit][Magit]]
+  - [[#git-link][Git-link]]
+  - [[#git-gut][Git-gut]]
+- [[#progetti][Progetti]]
+  - [[#projectile][Projectile]]
+  - [[#perspective][Perspective]]
+- [[#lsp][LSP]]
+  - [[#general-setup][General setup]]
+  - [[#debugger][Debugger]]
+- [[#programmazione][Programmazione]]
+  - [[#python][Python]]
+- [[#elfeed][Elfeed]]
+  - [[#elfeed-base][Elfeed base]]
+  - [[#elfeed-arxiv-keybinds][Elfeed Arxiv: Keybinds]]
+  - [[#elfeed-score][Elfeed Score]]
 - [[#variabili-locali][Variabili locali]]
 #+END_QUOTE
 
@@ -53,6 +79,9 @@ Configurazioni da caricare il prima possibile nel file early-init.el
 ** Cache e directory di supporto
 Istruzioni trovate nel README del package no-littering
 #+begin_src emacs-lisp :tangle early-init.el
+(push "~/.emacs.d/lisp/elfeed/" load-path)
+(setq emacs-original-dir user-emacs-directory)
+
 (setq user-emacs-directory "~/.cache/emacs")
 (setq package-user-dir "~/.cache/emacs/packages")
 
@@ -87,7 +116,7 @@ Istruzioni trovate nel README del package no-littering
 ;; Fast-startup
 (setq package-enable-at-startup nil)
 (setq package-quickstart t)
-;;(setq frame-inhibit-implied-resize t)
+(setq frame-inhibit-implied-resize t)
 (advice-add #'x-apply-session-resources :override #'ignore)
 #+end_src
 
@@ -109,21 +138,23 @@ Funzione per riportare il tempo di load
 			     (float-time
 			      (time-subtract after-init-time before-init-time)))
 		     gcs-done)))
+(setq use-package-verbose t)
+
 #+end_src
-** Configurazione package manager
-Init delle sorgenti per i packages e di package in generale
-#+begin_src emacs-lisp
-;; Initialize package sources
+** Package Manager
+*** Package.el
+Init e configurazione di use-package 
+#+begin_src emacs-lisp :tangle no
 (require 'package)
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
 ;; Initialize use-package
 (package-initialize)
-#+end_src
+(unless (package-installed-p 'use-package)
+   (package-install 'use-package))
+(require 'use-package)
 
-Init e configurazione di use-package 
-#+begin_src emacs-lisp
 (unless (package-installed-p 'use-package)
 	(package-refresh-contents)
 	(package-install 'use-package))
@@ -139,17 +170,30 @@ Init e configurazione di use-package
 (eval-when-compile
         (require 'use-package))
 #+end_src
-** Variabili shell
-Su MacOs lanciando l'app di Emacs non vengono viste le variabili nello .zprofile
-#+begin_src emacs-lisp
-;;(use-package exec-path-from-shell
-;;   :ensure t)
-;;(when (daemonp)
-;;  (exec-path-from-shell-initialize))
-;;(when (memq window-system '(mac ns x))
-;;  (exec-path-from-shell-initialize))
-;;(dolist (var '("SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO" "LANG" "LC_CTYPE" "NIX_SSL_CERT_FILE" "NIX_PATH"))
-;;  (add-to-list 'exec-path-from-shell-variables var))
+*** Straight.el
+#+begin_src emacs-lisp 
+;; Bootstrap straight.el
+(defvar bootstrap-version)
+(let ((bootstrap-file
+      (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+        "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+        'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
+;; Always use straight to install on systems other than Linux
+(setq straight-use-package-by-default (not (eq system-type 'gnu/linux)))
+
+;; Use straight.el for use-package expressions
+(straight-use-package 'use-package)
+
+;; Load the helper package for commands like `straight-x-clean-unused-repos'
+(require 'straight-x)
 #+end_src
 ** Pulizia cartella .emacs.d
 Packages per mantenere la cartella .emacs.d pulita ed installare tutto nella .cache
@@ -176,6 +220,7 @@ Packages per mantenere la cartella .emacs.d pulita ed installare tutto nella .ca
 Tiene sepre tutto aggiornato
 #+begin_src emacs-lisp
 (use-package auto-package-update
+  :disabled
   :ensure t
   :custom
   (auto-package-update-interval 7)
@@ -213,8 +258,36 @@ Setup generale di emacs
   (delete-old-versions -1) ;; Avoid excessive backups
   (version-control t)
   (vc-make-backup-files t)
+  (setq-default indent-tabs-mode nil)
+
   )
+(when (display-graphic-p)
+  (set-frame-parameter (selected-frame) 'alpha '(90 . 90))
+  (add-to-list 'default-frame-alist '(alpha . (90 . 90)))
+  (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+  (add-to-list 'default-frame-alist '(fullscreen . maximized)))
 #+end_src
+** Tramp
+#+begin_src emacs-lisp
+(eval-after-load 'tramp '(setenv "SHELL" "/bin/bash"))
+(eval-after-load 'tramp '(setq doom-modeline-buffer-file-name-style 'file-name))
+#+end_src
+** Macos
+*** Binds 
+Tastiera italiana 
+#+begin_src emacs-lisp
+;; https://emacs.stackexchange.com/questions/37172/how-to-insert-special-characters-not-on-a-us-uk-keyboard
+(when (memq window-system '(mac ns))
+  (setq ns-command-modifier 'meta)
+  (setq ns-alternate-modifier nil))
+#+end_src
+*** Variabili shell
+Su MacOs lanciando l'app di Emacs non vengono viste le variabili nello .zprofile.
+Aggiungere le variabili a Library/LaunchAgents/environment.plist
+#+begin_src sh :tangle no
+launch setenv CUSTOM_VAR value
+#+end_src
+
 * UI
 ** Tema
 Basato su doom per il momento
@@ -230,11 +303,21 @@ Basato su doom per il momento
 
 ** Modeline
 #+begin_src emacs-lisp
+;; Best addition ever
+(use-package poke-line
+  :ensure t
+  :init
+  (poke-line-global-mode 1)
+  (setq-default poke-line-pokemon "gengar")
+  )
 ;; Modeline
 (use-package doom-modeline
   :ensure t
   :init
   (doom-modeline-mode 1)
+  :custom
+  (doom-modeline-buffer-file-name-style 'relative-to-project)
+  (doom-modeline-lsp t)
   )
 #+end_src
 ** Parentesi
@@ -245,7 +328,7 @@ Colora le parentesi
   :hook (prog-mode-hook . rainbow-delimiters-mode))
 #+end_src
 * Evil 
-** Evil-undo
+** Evil-undo-fo
 Da caricare prima di evil per avere una funzione di undo avanzata
 #+begin_src emacs-lisp
 (use-package undo-fu
@@ -269,21 +352,23 @@ Da caricare prima di evil per avere una funzione di undo avanzata
   :ensure
   :after undo-fu
   :init	
-  ;; Vim-like
-  (general-evil-setup)
   ;; Spostamenti
   (setq evil-want-integration t) ;; TODO: Capire cosa fa
   (setq evil-want-keybinding nil) ;; TODO: Capire cosa fa
-  (setq evil-want-C-i-jump t)
+  (setq evil-want-C-i-jump nil)
   (setq evil-want-C-u-scroll t)
   (setq evil-want-C-u-delete t)
+  (setq evil-respect-visual-line-mode t)
   ;; Search
   (setq evil-search-module 'evil-search)
   ;; Indentazione
   (setq evil-shift-width 4) ;; Questo e' il default
   ;; Undo-Redo
   (setq evil-undo-system 'undo-fu)
+  ;; Vim-like
   :config
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
   (evil-mode 1)
   :custom
   (evil-vsplit-window-right t)
@@ -297,12 +382,23 @@ Un package che aggiunge keybinds basati su evil per multipli altri packages
   :after evil
   :init
   :custom
+  (evil-collection-outline-bind-tab-p nil)
   (collection-setup-minibuffer t)
   (evil-collection-calendar-want-org-bindings t)
-  :hook (org-mode . (lambda () evil-org-mode))
   :config
   (evil-collection-init)
   )
+#+end_src
+** Evil-agenda
+#+begin_src emacs-lisp 
+(use-package evil-org
+  :ensure
+  :after org
+  :hook (org-mode . (lambda () evil-org-mode))
+  :config
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys)
+)
 #+end_src
 ** Folding
 #+begin_src emacs-lisp
@@ -328,31 +424,46 @@ Un package che aggiunge keybinds basati su evil per multipli altri packages
 Aggiunge keybinds con prefisso e vari hook, disattivato per il momento
 #+begin_src emacs-lisp
 
-(use-package general 
+(use-package general
   :ensure t
   :after evil
   :config
-  (general-define-key
-   :states '(normal visual insert emacs)
-   :prefix "SPC"
-   :non-normal-prefix "C-SPC"
-    "c" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
-    "a" '(org-agenda :which-key "Agenda")
-    "SPC" '(find-file :which-key "Find file")
-    ;; Buffers
-    "b" '(:ignore t :which-key "Buffers")
-    "be" '(eval-buffer :which-key "Eval")
-    ;;"o" '(:ignore t :which-key "Org")
-    ;;"oa" '(org-agenda :which-key "Agenda")
-    ))
+  (general-evil-setup t)
+  (general-create-definer fd/supreme-leader
+    :keymaps '(normal insert visual emacs)
+    :prefix "SPC"
+    :global-prefix "C-SPC")
+  ;(general-define-key
+  ; :states '(normal visual insert emacs)
+  ; :prefix "SPC"
+  ; :non-normal-prefix "C-SPC"
+  ;  "c" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
+  ;  "a" '(org-agenda :which-key "Agenda")
+  ;  "SPC" '(find-file :which-key "Find file")
+  ;  ;; Buffers
+  ;  "b" '(:ignore t :which-key "Buffers")
+  ;  "be" '(eval-buffer :which-key "Eval")
+  ;  ;; Windows
+  ;  "w" '(:ignore t :which-key "Windows")
+  ;  "wv" '(split-window-vertically :which-key "Vertical Split")
+  ;  "wh" '(split-window-horizontally :which-key "Horizontal Split")
+  ;  ;; Org
+  ;  "o" '(:ignore t :which-key "Org")
+  ;  ;; Elfeed
+  ;  "e" '(:ignore t :which-key "Elfeed")
+  ;  "eo" '(elfeed :which-key "Open feed")
+  ;  "eu" '(elfeed-update :which-key "Update feed"))
+  )
 #+end_src
 Which-key permette di mostrare in un menu ogni keybind, da rivedere
 #+begin_src emacs-lisp
 (use-package which-key
   :ensure t
   :after general
+  :diminish which-key-mode
   :config
   (setq which-key-sort-order 'which-key-prefix-then-key-order)
+  (setq which-key-idle-delay 0.3)
   (which-key-mode)
 )
 #+end_src
@@ -394,16 +505,34 @@ Alternativa complessa a general, in fase di test, disabilitata per ora
   (define-key evil-normal-state-map (kbd "SPC") 'general-transient) ;; TODO Kill the buffer with ESC
 )
 #+end_src
+** General keybinds
+#+begin_src emacs-lisp
+(fd/supreme-leader
+  "c" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
+  "a" '(org-agenda :which-key "Agenda")
+  "SPC" '(find-file :which-key "Find file")
+  ;; Windows
+  "w" '(:ignore t :which-key "Windows")
+  "wv" '(split-window-vertically :which-key "Vertical Split")
+  "wh" '(split-window-horizontally :which-key "Horizontal Split")
+  "wk" '(split-window-horizontally :which-key "Kill windows")
+  ;; Buffers
+  "b" '(:ignore t :which-key "Buffers")
+  "be" '(eval-buffer :which-key "Eval")
+  ;; Roam!
+  "o" '(:ignore t :which-key "Org-Roam")
+  "oi" '(org-roam-node-insert :which-key "Insert node")
+  "of" '(org-roam-node-find :which-key "Find node")
+ )
+
+#+end_src
 * Formattazione e pulizia file
 ** Testo
 Rimozione di righe vuote e spazi bianchi finali
 #+begin_src emacs-lisp
 (use-package ws-butler
-  :ensure t
-  :defer 1
-  :custom
-  (ws-butler-mode 1)
-)
+  :hook ((text-mode . ws-butler-mode)
+         (prog-mode . ws-butler-mode)))
 #+end_src
 ** Specifico per estensione
 Package che richiede l'installazione di vari strumenti per la formattazione
@@ -466,30 +595,31 @@ Unico blocco diviso in più sezioni
 *** Init
 Evita di caricare allo startup org
 #+begin_src emacs-lisp
+(defun cst-org ()
+      (org-indent-mode)
+      (visual-line-mode 1)
+)
 (use-package org
-  :ensure t
-  ;;:defer t
-  :commands (org-capture org-agenda)
-  :hook (org-mode . (lambda()
-			(org-indent-mode)
-			(fill-column 80)
-			(auto-fill-mode 1)
-			(org-src-tab-acts-natively t)
-			(evil-auto-indent nil)))
-  
-  :config
+    :defer t
+    :init
+    (add-hook 'org-mode-hook 'cst-org)
+    :config
 #+end_src
 *** Agenda
 Scritta per funzionare con org-roam, richiede settata la variabile ORG_PATH
+**** Status tasks
 #+begin_src emacs-lisp
   (setq string-todos '("TODO" "ACTIVE" "DONE" "HOLD" "CANCELED"))
   (setq locregex (string-join string-todos "|"))
   (setq org-agenda-base (getenv "ORG_PATH"))
   (setq org-agenda-files '(my/update-agenda))
   (setq org-todo-keywords
-      '((sequence "TODO(t@)" "ACTIVE(a@)" "|" "DONE(d@)") ;; Generali
+      '((sequence "TODO(t@)" "ACTIVE(a@)" "|" "DONE(d@)") ;;   Generali
 	(sequence  "|" "HOLD(h@)" "CANCELED(c@)")
 	))
+#+end_src
+**** Tags
+#+begin_src emacs-lisp
   (setq org-tag-alist
     '((:startgroup)
        ; Put mutually exclusive tags here
@@ -499,21 +629,40 @@ Scritta per funzionare con org-roam, richiede settata la variabile ORG_PATH
   (advice-add 'org-agenda :before #'my/update-agenda)
   (advice-add 'org-todo-list :before #'my/update-agenda)
 #+end_src
+**** Views
+#+begin_src emacs-lisp
+ (setq org-agenda-custom-commands nil)
+ (setq org-agenda-custom-commands
+      '(("ces" "Custom: Agenda and Emacs SOMEDAY [#A] items"
+         ((org-ql-block '(todo "TODO")
+                        ((org-ql-block-header "SOMEDAY :Emacs: High-priority")))
+          (agenda)))))
+
+#+end_src
 *** Babel
 Tangle di file e moduli aggiungtivi
 #+begin_src emacs-lisp
   (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)))
+    'org-babel-load-languages
+    '((emacs-lisp . t)
+      ))
   (require 'org-tempo)
   (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-  (setq org-src-tab-acts-natively t)
+  (add-to-list 'org-structure-template-alist '("sh" . "src sh"))
+  (add-to-list 'org-structure-template-alist '("py" . "src python"))
+  ;;(setq org-src-tab-acts-natively t)
   (setq org-src-preserve-indentation t)
 #+end_src
-
 *** Fine org
 #+begin_src emacs-lisp
 )
+#+end_src
+** Org-ql
+#+begin_src emacs-lisp
+(use-package org-ql
+  :straight (:files (:defaults (:exclude"helm-org-ql.el")))
+  :defer t
+  )
 #+end_src
 ** Super agenda
 Una versione aggiornata che permette di raggruppare le entries.
@@ -523,15 +672,22 @@ Una versione aggiornata che permette di raggruppare le entries.
   :after org
   :init
   (setq org-super-agenda-header-map (make-sparse-keymap))
-  :hook (org-agenda-mode . org-super-agenda-mode)
-  ;;:config
-  ;;(org-super-agenda-mode)
+  ;;:hook (org-agenda-mode . org-super-agenda-mode)
+  :config
+  (org-super-agenda-mode 1)
+  (setq org-super-agenda-groups
+        '(;; Each group has an implicit boolean OR operator between its selectors.
+          (:name "Today"  ; Optionally specify section name
+                 ;;:time-grid t  ; Items that appear on the time grid
+                 :todo t)  ; Items that have this TODO keyword
+          ))
   )
 #+end_src
 ** Table-of-contents
 #+begin_src emacs-lisp
 (use-package toc-org
   :ensure t
+  :after org
 )
 #+end_src
 ** UI
@@ -552,6 +708,137 @@ Al momento non funzione nell'agenda.
   (hl-todo-mode)
   )
 #+end_src
+*** Text scaling
+Keybindings da usare C+M+- e C+M+=.
+#+begin_src emacs-lisp 
+(use-package default-text-scale
+  :defer 1
+  :config
+  (default-text-scale-mode))
+#+end_src
+*** Markup
+#+begin_src emacs-lisp
+(use-package org-appear
+  :ensure
+  :hook (org-mode . org-appear-mode))
+#+end_src
+* File browsing
+** Dired
+Migliora le funzioni di default del file manager.
+Su MacOS bisogna:
+1. aggiungere i permessi di accesso a tutto il disco a /usr/bin/ruby
+2. avere coreutils installato con homebrew oppure rimuovere "-group-directories-first"
+*** Base config
+#+begin_src emacs-lisp 
+(use-package all-the-icons-dired
+  :ensure) ;; Forse da limitare su terminale?
+
+(use-package dired
+  :ensure nil
+  :straight nil
+  :defer 1
+  :commands (dired dired-jump)
+  :config
+  (when (eq system-type 'darwin)
+    (setq insert-directory-program "/usr/local/bin/gls"))
+  (setq dired-listing-switches "-agho --group-directories-first"
+        dired-omit-files "^\\.[^.].*"
+        dired-omit-verbose nil
+        dired-hide-details-hide-symlink-targets nil
+        delete-by-moving-to-trash t)
+
+  (autoload 'dired-omit-mode "dired-x")
+
+  (add-hook 'dired-load-hook
+            (lambda ()
+              (interactive)
+              (dired-collapse)))
+
+  (add-hook 'dired-mode-hook
+            (lambda ()
+              (interactive)
+              (dired-omit-mode 1)
+              (dired-hide-details-mode 1)
+              (when (display-graphic-p)
+                (all-the-icons-dired-mode 1))
+              (hl-line-mode 1))))
+#+end_src
+*** Colori
+#+begin_src emacs-lisp
+(use-package dired-rainbow
+    :ensure
+    :defer 2
+    :config
+    (dired-rainbow-define-chmod directory "#6cb2eb" "d.*")
+    (dired-rainbow-define html "#eb5286" ("css" "less" "sass" "scss" "htm" "html" "jhtm" "mht" "eml" "mustache" "xhtml"))
+    (dired-rainbow-define xml "#f2d024" ("xml" "xsd" "xsl" "xslt" "wsdl" "bib" "json" "msg" "pgn" "rss" "yaml" "yml" "rdata"))
+    (dired-rainbow-define document "#9561e2" ("docm" "doc" "docx" "odb" "odt" "pdb" "pdf" "ps" "rtf" "djvu" "epub" "odp" "ppt" "pptx"))
+    (dired-rainbow-define markdown "#ffed4a" ("org" "etx" "info" "markdown" "md" "mkd" "nfo" "pod" "rst" "tex" "textfile" "txt"))
+    (dired-rainbow-define database "#6574cd" ("xlsx" "xls" "csv" "accdb" "db" "mdb" "sqlite" "nc"))
+    (dired-rainbow-define media "#de751f" ("mp3" "mp4" "mkv" "MP3" "MP4" "avi" "mpeg" "mpg" "flv" "ogg" "mov" "mid" "midi" "wav" "aiff" "flac"))
+    (dired-rainbow-define image "#f66d9b" ("tiff" "tif" "cdr" "gif" "ico" "jpeg" "jpg" "png" "psd" "eps" "svg"))
+    (dired-rainbow-define log "#c17d11" ("log"))
+    (dired-rainbow-define shell "#f6993f" ("awk" "bash" "bat" "sed" "sh" "zsh" "vim"))
+    (dired-rainbow-define interpreted "#38c172" ("py" "ipynb" "rb" "pl" "t" "msql" "mysql" "pgsql" "sql" "r" "clj" "cljs" "scala" "js"))
+    (dired-rainbow-define compiled "#4dc0b5" ("asm" "cl" "lisp" "el" "c" "h" "c++" "h++" "hpp" "hxx" "m" "cc" "cs" "cp" "cpp" "go" "f" "for" "ftn" "f90" "f95" "f03" "f08" "s" "rs" "hi" "hs" "pyc" ".java"))
+    (dired-rainbow-define executable "#8cc4ff" ("exe" "msi"))
+    (dired-rainbow-define compressed "#51d88a" ("7z" "zip" "bz2" "tgz" "txz" "gz" "xz" "z" "Z" "jar" "war" "ear" "rar" "sar" "xpi" "apk" "xz" "tar"))
+    (dired-rainbow-define packaged "#faad63" ("deb" "rpm" "apk" "jad" "jar" "cab" "pak" "pk3" "vdf" "vpk" "bsp"))
+    (dired-rainbow-define encrypted "#ffed4a" ("gpg" "pgp" "asc" "bfe" "enc" "signature" "sig" "p12" "pem"))
+    (dired-rainbow-define fonts "#6cb2eb" ("afm" "fon" "fnt" "pfb" "pfm" "ttf" "otf"))
+    (dired-rainbow-define partition "#e3342f" ("dmg" "iso" "bin" "nrg" "qcow" "toast" "vcd" "vmdk" "bak"))
+    (dired-rainbow-define vc "#0074d9" ("git" "gitignore" "gitattributes" "gitmodules"))
+    (dired-rainbow-define-chmod executable-unix "#38c172" "-.*x.*"))
+#+end_src
+*** Tweaks
+#+begin_src emacs-lisp
+(use-package dired-single
+  :ensure
+  :defer t)
+(use-package dired-ranger
+  :ensure
+  :defer t)
+(use-package dired-collapse
+  :ensure
+  :defer t)
+#+end_src
+*** Keybinds
+#+begin_src emacs-lisp
+(evil-collection-define-key 'normal 'dired-mode-map
+    "h" 'dired-single-up-directory
+    "H" 'dired-omit-mode
+    "l" 'dired-single-buffer
+    "y" 'dired-ranger-copy
+    "X" 'dired-ranger-move
+    "p" 'dired-ranger-paste)
+#+end_src
+** OpenFile
+Funziona con find-file per dired invece bisogna usare il keybind !
+#+begin_src emacs-lisp
+(use-package openwith
+  :ensure
+  :defer 1
+  :if (display-graphic-p)
+  :config
+  (setq openwith-associations
+        (list
+          (list (openwith-make-extension-regexp
+                '("mpg" "mpeg" "mp3" "mp4"
+                  "avi" "wmv" "wav" "mov" "flv"
+                  "ogm" "ogg" "mkv"))
+                "open"
+                '(file))
+          (list (openwith-make-extension-regexp
+                '("xbm" "pbm" "pgm" "ppm" "pnm"
+                  "png" "gif" "bmp" "tif" "jpeg")) ;; Removed jpg because Telega was
+                  ;; causing feh to be opened...
+                  "open"
+                  '(file))
+          (list (openwith-make-extension-regexp
+                '("pdf"))
+                "open"
+                '(file)))))
+#+end_src
 * Org roam
 Mega modulo che richiede il suo header a parte.
 ** Funzioni di appoggio
@@ -561,18 +848,25 @@ Momentaneamente disattivato, forse troppo scomodo
 *** Init
 #+begin_src emacs-lisp 
 (use-package org-roam
-  :ensure
-  :demand t
-  :defer 1
+  :straight t
+  :after org
+  :defer t
   :custom
   (org-roam-directory org-agenda-base)
   (org-roam-completion-everywhere t)
   (org-roam-completion-system 'default)
   (org-roam-dailies-directory "journals")
-  :config
+  (org-roam-capture-templates
+   '(
+     ("d" "default" plain "%?"
+    :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n#+date: %U\n")
+    :unnarrowed t)
+     )
+   )
 #+end_src
 *** Config
 #+begin_src emacs-lisp
+  :config
   (require 'org-roam-dailies)
   (org-roam-db-autosync-mode))
 #+end_src
@@ -597,7 +891,155 @@ Momentaneamente disattivato, forse troppo scomodo
   (add-hook 'ledger-mode-hook #'evil-ledger-mode))
 #+end_src
 * Bibtex
-* Variabili locali
+#+begin_src emacs-lisp
+#+end_src
+* Git
+** Magit
+#+begin_src emacs-lisp
+(use-package magit
+  :ensure
+  :commands (magit-status magit-get-current-branch)
+  :init
+  (fd/supreme-leader
+    "g" '(:ignore t :which-key "Git")
+    "gs" '(magit-status :which-key "Status")
+    )
+  :custom
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+#+end_src
+** Git-link
+Apri il link alla repo con un tasto
+#+begin_src emacs-lisp
+(use-package git-link
+  :ensure
+  :commands git-link
+  :config
+  (setq git-link-open-in-browser t))
+#+end_src
+** Git-gut
+#+begin_src emacs-lisp
+(use-package git-gutter
+  :straight git-gutter-fringe
+  :diminish
+  :hook ((text-mode . git-gutter-mode)
+         (prog-mode . git-gutter-mode))
+  :config
+  (setq git-gutter:update-interval 2)
+  (setq git-gutter:modified-sign "!")
+  (setq git-gutter:added-sign "+")
+  (setq git-gutter:deleted-sign "-")
+  (set-face-foreground 'git-gutter:added "LightGreen")
+  (set-face-foreground 'git-gutter:modified "LightGoldenrod")
+  (set-face-foreground 'git-gutter:deleted "LightCoral"))
+#+end_src
+* Progetti
+** Projectile
+#+begin_src emacs-lisp
+(use-package projectile
+  :ensure t
+  :defer t
+  :diminish projectile-mode
+  :config
+  (projectile-mode)
+)
+#+end_src
+** Perspective
+#+begin_src emacs-lisp :tangle no
+(use-package perspective
+  :demand t
+  :custom
+  (persp-initial-frame-name "Main")
+  :config
+  ;; Running `persp-mode' multiple times resets the perspective list...
+  (unless (equal persp-mode t)
+    (persp-mode)))
+#+end_src
+* LSP
+** General setup
+#+begin_src emacs-lisp
+(use-package lsp-mode
+  :ensure t
+  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+         (python-mode . lsp)
+         ;; if you want which-key integration
+         (lsp-mode . lsp-enable-which-key-integration))
+  :init
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  (setq lsp-keymap-prefix "C-c l")
+    :commands lsp)
+(use-package lsp-ui
+  :ensure t
+  :commands lsp-ui-mode)
+#+end_src
+** Debugger
+#+begin_src emacs-lisp
+(use-package dap-mode
+  :ensure t
+  :after org
+  )
+#+end_src
+* Programmazione
+** Python
+*** Completion di base
+Richiede setuptools
+#+begin_src emacs-lisp
+(use-package anaconda-mode
+  :ensure t
+  :hook (python-mode-hook . anaconda-mode)
+  :hook (python-mode-hook . anaconda-eldoc-mode)
+)
+#+end_src
+*** Poetry
+#+begin_src emacs-lisp
+(use-package poetry
+ :ensure t
+ :hook (python-mode-hook .poetry-tracking-mode))
+#+end_src
+
+* Elfeed
+Un modo alternativo di trovare i paper su ArXiv.
+** Elfeed base
+#+begin_src emacs-lisp
+(use-package elfeed
+  :ensure t
+  :commands elfeed
+  :init
+  (fd/supreme-leader
+    "e" '(:ignore t :which-key "Elfeed")
+    "eo" '(elfeed :which-key "Feeds")
+    "eu" '(elfeed-update :which-key "Update")
+    )
+  :config
+  (setq elfeed-feeds
+	'(("http://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=300&sortBy=submittedDate&sortOrder=descending")
+      ("[[http://export.arxiv.org/api/query?search_query=cat:stat.TH&start=0&max_results=300&sortBy=submittedDate&sortOrder=descending]]")))
+;;  (setq elfeed-feeds
+	;;'("http://export.arxiv.org/api/query?search_query=cat:cs.LG"
+      ;;"[[http://export.arxiv.org/api/query?search_query=cat:stat.TH]]")
+	;;)
+  ;;(setq-default elfeed-search-filter "=start=0 max_results=300 =sortBy=submittedDate =sortOrder=descending #30 ")
+  (require 'elfeed-arxiv-aspect)
+  (require 'elfeed-arxiv-excerpts)
+
+
+#+end_src
+** Elfeed Arxiv: Keybinds
+#+begin_src emacs-lisp
+)
+#+end_src
+** Elfeed Score
+#+begin_src emacs-lisp
+(use-package elfeed-score
+  :ensure t
+  :after elfeed
+  :config
+  (elfeed-score-load-score-file "~/.emacs.d/lisp/elfeed/elfeed.score") ; See the elfeed-score documentation for the score file syntax
+  (setq elfeed-score-serde-score-file "elfeed.score")
+  (elfeed-score-enable)
+  ;;(define-key elfeed-search-mode-map "=" elfeed-score-map)
+  )
+#+end_src
+** Variabili locali
 
 Codice che abilitia il tangle-on-save e il reload di emacs quando si salva.
 Richiedono autorizzazione la prima volta che vengono lette.
