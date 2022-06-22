@@ -1,5 +1,5 @@
 ;; -*- lexical-binding: t; -*-
-;; File generato automaticamente, cambiare il emacs.org
+;; File generato automaticamente, cambiare emacs.org
 
 (add-hook 'emacs-startup-hook
 	  (lambda ()
@@ -18,7 +18,7 @@
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
         (url-retrieve-synchronously
-        "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+"https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
         'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
@@ -42,15 +42,13 @@
   )
 
 (use-package gcmh
-  :ensure t
-  :custom
-  (gcmh-mode 1)
+  :ensure 
+  :custom (gcmh-mode 1)
   (gcmh-idle-delay 5)
   (gcmh-high-cons-threshold (* 16 1024 1024))
   (gc-cons-percentage 0.1))
 
 (use-package auto-package-update
-  :disabled
   :ensure t
   :custom
   (auto-package-update-interval 7)
@@ -60,11 +58,18 @@
   (auto-package-update-maybe)
   (auto-package-update-at-time "09:00"))
 
+(setq dropbox-base (getenv "DROPBOX_PATH"))
+(setq org-base (concat dropbox-base "Org"))
+(setq ledger-base (concat dropbox-base "Ledger"))
+(setq bib-base (concat dropbox-base "Zotero/biblio.bib"))
+(setq pdf-base (concat dropbox-base "Zotero/attachments"))
+(setq agenda-base (concat dropbox-base "Agenda/inbox.org"))
+
 (use-package emacs
   :init
-  (set-face-attribute 'default nil :height 180) ;; Font
-  (set-face-attribute 'fixed-pitch nil :height 180) ;; Font
-  (set-face-attribute 'variable-pitch nil :height 180) ;; Font
+  (set-face-attribute 'default nil :font "FiraCode Nerd Font Mono" :weight 'light :height 180) ;; Font
+  (set-face-attribute 'fixed-pitch nil :font "FiraCode Nerd Font Mono" :weight 'light :height 180) ;; Font
+  (set-face-attribute 'variable-pitch nil :font "FiraCode Nerd Font Mono" :weight 'light :height 180) ;; Font
   ;; Vertico setup
   (setq enable-recursive-minibuffers t)
   :config
@@ -73,6 +78,7 @@
   (setq-default frame-title-format '("%b"))
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit) ;; TODO Separare il keybind
   (global-display-line-numbers-mode)
+  (setq read-extended-command-predicate #'command-completion-default-include-p) ;; Nascondi comandi che non funzionano
   ;;(server-start)
   :custom
   (inhibit-startup-screen t)
@@ -102,7 +108,14 @@
   (setq ns-command-modifier 'meta)
   (setq ns-alternate-modifier nil))
 
-;;;; Tema
+(use-package so-long
+  :ensure
+  :config
+  (setq so-long-threshold 10000)
+  (global-so-long-mode 1)
+  )
+
+;; Tema
 (use-package doom-themes
   :ensure t
   :config
@@ -115,7 +128,7 @@
   :ensure t
   :init
   (poke-line-global-mode 1)
-  (setq-default poke-line-pokemon "gengar")
+  (setq-default poke-line-pokemon "totodile")
   )
 ;; Modeline
 (use-package doom-modeline
@@ -127,9 +140,44 @@
   (doom-modeline-lsp t)
   )
 
+;; Idea pazza per il banner
+;;(defun random-file ()
+;; (interactive)
+;; (setf local-dir (directory-files (concat emacs-original-dir "")))
+;; (message (nth (random (length local-dir)) local-dir ))
+;;)
+(use-package dashboard
+  :ensure t
+  :init
+  ;;( (random)(directory-files (concat user-folder)) )
+  ;;(setq dashboard-startup-banner "/Users/daghero/Downloads/diglett.jpeg")
+  ;(setq dashboard-banner-logo-title (concat "A wild " nome))
+  ;;(setq dashboard-init-info "Messagio di test") Appare sotto l'immagine iniziale
+  (setq dashboard-set-footer nil)
+
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-center-content t)
+  (setq dashboard-items '((recents  . 5)
+                        (bookmarks . 5)
+                        (projects . 5)
+                        (agenda . 5)
+                        (registers . 5)))
+
+  :config
+  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+  (dashboard-setup-startup-hook))
+
 (use-package rainbow-delimiters
   :ensure t
   :hook (prog-mode-hook . rainbow-delimiters-mode))
+
+(use-package focus
+  ;; Breaks org-mode with source code.
+  :disabled
+  :ensure
+  :hook (text-mode . focus-mode)
+  )
 
 (use-package undo-fu
   :after emacs
@@ -149,7 +197,7 @@
 (use-package evil
   :ensure
   :after undo-fu
-  :init	
+  :init
   ;; Spostamenti
   (setq evil-want-integration t) ;; TODO: Capire cosa fa
   (setq evil-want-keybinding nil) ;; TODO: Capire cosa fa
@@ -167,7 +215,9 @@
   :config
   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
   (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+  (evil-set-initial-state 'pdf-view-mode 'normal)
   (evil-mode 1)
+
   :custom
   (evil-vsplit-window-right t)
   )
@@ -218,26 +268,6 @@
     :keymaps '(normal insert visual emacs)
     :prefix "SPC"
     :global-prefix "C-SPC")
-  ;(general-define-key
-  ; :states '(normal visual insert emacs)
-  ; :prefix "SPC"
-  ; :non-normal-prefix "C-SPC"
-  ;  "c" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
-  ;  "a" '(org-agenda :which-key "Agenda")
-  ;  "SPC" '(find-file :which-key "Find file")
-  ;  ;; Buffers
-  ;  "b" '(:ignore t :which-key "Buffers")
-  ;  "be" '(eval-buffer :which-key "Eval")
-  ;  ;; Windows
-  ;  "w" '(:ignore t :which-key "Windows")
-  ;  "wv" '(split-window-vertically :which-key "Vertical Split")
-  ;  "wh" '(split-window-horizontally :which-key "Horizontal Split")
-  ;  ;; Org
-  ;  "o" '(:ignore t :which-key "Org")
-  ;  ;; Elfeed
-  ;  "e" '(:ignore t :which-key "Elfeed")
-  ;  "eo" '(elfeed :which-key "Open feed")
-  ;  "eu" '(elfeed-update :which-key "Update feed"))
   )
 
 (use-package which-key
@@ -246,7 +276,7 @@
   :diminish which-key-mode
   :config
   (setq which-key-sort-order 'which-key-prefix-then-key-order)
-  (setq which-key-idle-delay 0.3)
+  (setq which-key-idle-delay 0.5)
   (which-key-mode)
 )
 
@@ -254,11 +284,12 @@
   "c" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
   "a" '(org-agenda :which-key "Agenda")
   "SPC" '(find-file :which-key "Find file")
+  "w" '(save-buffer :which-key "Save file")
   ;; Windows
-  "w" '(:ignore t :which-key "Windows")
-  "wv" '(split-window-vertically :which-key "Vertical Split")
-  "wh" '(split-window-horizontally :which-key "Horizontal Split")
-  "wk" '(split-window-horizontally :which-key "Kill windows")
+  "f" '(:ignore t :which-key "Frame")
+  "fv" '(split-window-vertically :which-key "Vertical Split")
+  "fh" '(split-window-horizontally :which-key "Horizontal Split")
+  "fk" '(split-window-horizontally :which-key "Kill windows")
   ;; Buffers
   "b" '(:ignore t :which-key "Buffers")
   "be" '(eval-buffer :which-key "Eval")
@@ -276,15 +307,13 @@
   :disabled
   :ensure
   :init
-  ;; TODO Aggiungere un keybind per Black
+  ;; TODO Add Black
   )
 
 (use-package vertico
   :ensure t
   :custom
   (vertico-cycle t)
-  ;;:custom-face
-  ;;(vertico-current ((t (:background "#3a3f5a"))))
   :init
   (vertico-mode))
 
@@ -293,81 +322,133 @@
   :init
   (savehist-mode))
 
-;; Da attivare piano piano
-;;(use-package orderless  :ensure t)
-;;(use-package marginalia  :ensure t)
-;;(use-package embark  :ensure t)
-;;(use-package consult  :ensure t)
-;;(use-package embark-consult  :ensure t)
+(use-package orderless
+  :ensure t
+  :init
+  (setq completion-styles '(orderless)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles . (partial-completion))))))
+
+(use-package marginalia
+  :after vertico
+  :straight t
+  :custom
+  (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
+  :init
+  (marginalia-mode))
+
+(use-package consult
+  :ensure t
+  :demand t
+  :bind (("C-s" . consult-line)
+         ("C-M-l" . consult-imenu)
+         ("C-M-j" . persp-switch-to-buffer*)
+         :map minibuffer-local-map
+         ("C-r" . consult-history))
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+  :init
+  :custom
+  ;;(consult-project-root-function #'dw/get-project-root)
+  (completion-in-region-function #'consult-completion-in-region)
+)
+
+(use-package embark
+  :ensure t
+  :bind (("C-S-a" . embark-act)
+         :map minibuffer-local-map
+         ("C-d" . embark-act))
+  :config
+  ;; Show Embark actions via which-key
+  (setq embark-action-indicator
+        (lambda (map)
+          (which-key--show-keymap "Embark" map nil nil 'no-paging)
+          #'which-key--hide-popup-ignore-command)
+        embark-become-indicator embark-action-indicator))
+
+(use-package embark-consult
+  :ensure t
+  :after (embark consult)
+  :demand t ; only necessary if you have the hook below
+  ;; if you want to have consult previews as you move around an
+  ;; auto-updating embark collect buffer
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package company
+  :ensure
+  :config
+  (global-company-mode))
 
 (defun my/agenda-fetch ()
-  ;; 1. Se voglio aggiungere una task ad un file nuovo?!
-  ;; 2. Se non ne trova non parte l'agenda
   ;;(interactive)
-  (split-string 
+  (split-string
    (shell-command-to-string (concat "rg --type org '" locregex "' " org-agenda-base " -l "))
    "\n")
-   )
+  )
 (defun my/update-agenda (&rest _)
   ;;(interactive)
-  (setq org-agenda-files (my/agenda-fetch)))
+  (setq org-agenda-files (my/agenda-fetch))
+  (push agenda-base org-agenda-files))
 
 (defun cst-org ()
-      (org-indent-mode)
-      (visual-line-mode 1)
-)
+  (org-indent-mode)
+  (visual-line-mode 1)
+  )
 (use-package org
-    :defer t
-    :init
-    (add-hook 'org-mode-hook 'cst-org)
-    :config
+  :mode ("\\.org\\'" . org-mode)
+  :defer
+  :init
+  (add-hook 'org-mode-hook 'cst-org)
+  :config
+  (setq org-link-file-path-type 'relative)
 
-  (setq string-todos '("TODO" "ACTIVE" "DONE" "HOLD" "CANCELED"))
-  (setq locregex (string-join string-todos "|"))
-  (setq org-agenda-base (getenv "ORG_PATH"))
-  (setq org-agenda-files '(my/update-agenda))
-  (setq org-todo-keywords
+(setq string-todos '("TODO" "ACTIVE" "DONE" "HOLD" "CANCELED"))
+(setq locregex (string-join string-todos "|"))
+(setq org-agenda-base org-base)
+(setq org-agenda-files '(my/update-agenda))
+(setq org-todo-keywords
       '((sequence "TODO(t@)" "ACTIVE(a@)" "|" "DONE(d@)") ;;   Generali
-	(sequence  "|" "HOLD(h@)" "CANCELED(c@)")
-	))
+        (sequence  "|" "HOLD(h@)" "CANCELED(c@)")
+        ))
 
-  (setq org-tag-alist
-    '((:startgroup)
-       ; Put mutually exclusive tags here
-       (:endgroup)
-       ("note" . ?n)
-       ("idea" . ?i)))
-  (advice-add 'org-agenda :before #'my/update-agenda)
-  (advice-add 'org-todo-list :before #'my/update-agenda)
+(setq org-tag-alist
+      '((:startgroup) ; Put mutually exclusive tags here
+        (:endgroup)
+        ("note" . ?n)
+        ("idea" . ?i)))
+(advice-add 'org-agenda :before #'my/update-agenda)
+(advice-add 'org-todo-list :before #'my/update-agenda)
 
- (setq org-agenda-custom-commands nil)
- (setq org-agenda-custom-commands
+(setq org-agenda-custom-commands nil)
+(setq org-agenda-custom-commands
       '(("ces" "Custom: Agenda and Emacs SOMEDAY [#A] items"
          ((org-ql-block '(todo "TODO")
                         ((org-ql-block-header "SOMEDAY :Emacs: High-priority")))
           (agenda)))))
 
-  (org-babel-do-load-languages
-    'org-babel-load-languages
-    '((emacs-lisp . t)
-      ))
-  (require 'org-tempo)
-  (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-  (add-to-list 'org-structure-template-alist '("sh" . "src sh"))
-  (add-to-list 'org-structure-template-alist '("py" . "src python"))
-  ;;(setq org-src-tab-acts-natively t)
-  (setq org-src-preserve-indentation t)
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   ))
+(require 'org-tempo)
+(add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+(add-to-list 'org-structure-template-alist '("sh" . "src sh"))
+(add-to-list 'org-structure-template-alist '("py" . "src python"))
+(add-to-list 'org-structure-template-alist '("js" . "src javascript"))
+;;(setq org-src-tab-acts-natively t)
+(setq org-src-preserve-indentation t)
 
 )
 
 (use-package org-ql
-  :straight (:files (:defaults (:exclude"helm-org-ql.el")))
+  :ensure ;; :straight (:files (:defaults (:exclude"helm-org-ql.el")))
   :defer t
   )
 
 (use-package org-super-agenda
   :ensure t
   :after org
+  :defer
   :init
   (setq org-super-agenda-header-map (make-sparse-keymap))
   ;;:hook (org-agenda-mode . org-super-agenda-mode)
@@ -384,7 +465,8 @@
 (use-package toc-org
   :ensure t
   :after org
-)
+  :defer t
+  )
 
 (use-package default-text-scale
   :defer 1
@@ -399,7 +481,7 @@
   :ensure) ;; Forse da limitare su terminale?
 
 (use-package dired
-  :ensure nil
+	:ensure nil
   :straight nil
   :defer 1
   :commands (dired dired-jump)
@@ -429,29 +511,29 @@
               (hl-line-mode 1))))
 
 (use-package dired-rainbow
-    :ensure
-    :defer 2
-    :config
-    (dired-rainbow-define-chmod directory "#6cb2eb" "d.*")
-    (dired-rainbow-define html "#eb5286" ("css" "less" "sass" "scss" "htm" "html" "jhtm" "mht" "eml" "mustache" "xhtml"))
-    (dired-rainbow-define xml "#f2d024" ("xml" "xsd" "xsl" "xslt" "wsdl" "bib" "json" "msg" "pgn" "rss" "yaml" "yml" "rdata"))
-    (dired-rainbow-define document "#9561e2" ("docm" "doc" "docx" "odb" "odt" "pdb" "pdf" "ps" "rtf" "djvu" "epub" "odp" "ppt" "pptx"))
-    (dired-rainbow-define markdown "#ffed4a" ("org" "etx" "info" "markdown" "md" "mkd" "nfo" "pod" "rst" "tex" "textfile" "txt"))
-    (dired-rainbow-define database "#6574cd" ("xlsx" "xls" "csv" "accdb" "db" "mdb" "sqlite" "nc"))
-    (dired-rainbow-define media "#de751f" ("mp3" "mp4" "mkv" "MP3" "MP4" "avi" "mpeg" "mpg" "flv" "ogg" "mov" "mid" "midi" "wav" "aiff" "flac"))
-    (dired-rainbow-define image "#f66d9b" ("tiff" "tif" "cdr" "gif" "ico" "jpeg" "jpg" "png" "psd" "eps" "svg"))
-    (dired-rainbow-define log "#c17d11" ("log"))
-    (dired-rainbow-define shell "#f6993f" ("awk" "bash" "bat" "sed" "sh" "zsh" "vim"))
-    (dired-rainbow-define interpreted "#38c172" ("py" "ipynb" "rb" "pl" "t" "msql" "mysql" "pgsql" "sql" "r" "clj" "cljs" "scala" "js"))
-    (dired-rainbow-define compiled "#4dc0b5" ("asm" "cl" "lisp" "el" "c" "h" "c++" "h++" "hpp" "hxx" "m" "cc" "cs" "cp" "cpp" "go" "f" "for" "ftn" "f90" "f95" "f03" "f08" "s" "rs" "hi" "hs" "pyc" ".java"))
-    (dired-rainbow-define executable "#8cc4ff" ("exe" "msi"))
-    (dired-rainbow-define compressed "#51d88a" ("7z" "zip" "bz2" "tgz" "txz" "gz" "xz" "z" "Z" "jar" "war" "ear" "rar" "sar" "xpi" "apk" "xz" "tar"))
-    (dired-rainbow-define packaged "#faad63" ("deb" "rpm" "apk" "jad" "jar" "cab" "pak" "pk3" "vdf" "vpk" "bsp"))
-    (dired-rainbow-define encrypted "#ffed4a" ("gpg" "pgp" "asc" "bfe" "enc" "signature" "sig" "p12" "pem"))
-    (dired-rainbow-define fonts "#6cb2eb" ("afm" "fon" "fnt" "pfb" "pfm" "ttf" "otf"))
-    (dired-rainbow-define partition "#e3342f" ("dmg" "iso" "bin" "nrg" "qcow" "toast" "vcd" "vmdk" "bak"))
-    (dired-rainbow-define vc "#0074d9" ("git" "gitignore" "gitattributes" "gitmodules"))
-    (dired-rainbow-define-chmod executable-unix "#38c172" "-.*x.*"))
+  :ensure
+  :defer 2
+  :config
+  (dired-rainbow-define-chmod directory "#6cb2eb" "d.*")
+  (dired-rainbow-define html "#eb5286" ("css" "less" "sass" "scss" "htm" "html" "jhtm" "mht" "eml" "mustache" "xhtml"))
+  (dired-rainbow-define xml "#f2d024" ("xml" "xsd" "xsl" "xslt" "wsdl" "bib" "json" "msg" "pgn" "rss" "yaml" "yml" "rdata"))
+  (dired-rainbow-define document "#9561e2" ("docm" "doc" "docx" "odb" "odt" "pdb" "pdf" "ps" "rtf" "djvu" "epub" "odp" "ppt" "pptx"))
+  (dired-rainbow-define markdown "#ffed4a" ("org" "etx" "info" "markdown" "md" "mkd" "nfo" "pod" "rst" "tex" "textfile" "txt"))
+  (dired-rainbow-define database "#6574cd" ("xlsx" "xls" "csv" "accdb" "db" "mdb" "sqlite" "nc"))
+  (dired-rainbow-define media "#de751f" ("mp3" "mp4" "mkv" "MP3" "MP4" "avi" "mpeg" "mpg" "flv" "ogg" "mov" "mid" "midi" "wav" "aiff" "flac"))
+  (dired-rainbow-define image "#f66d9b" ("tiff" "tif" "cdr" "gif" "ico" "jpeg" "jpg" "png" "psd" "eps" "svg"))
+  (dired-rainbow-define log "#c17d11" ("log"))
+  (dired-rainbow-define shell "#f6993f" ("awk" "bash" "bat" "sed" "sh" "zsh" "vim"))
+  (dired-rainbow-define interpreted "#38c172" ("py" "ipynb" "rb" "pl" "t" "msql" "mysql" "pgsql" "sql" "r" "clj" "cljs" "scala" "js"))
+  (dired-rainbow-define compiled "#4dc0b5" ("asm" "cl" "lisp" "el" "c" "h" "c++" "h++" "hpp" "hxx" "m" "cc" "cs" "cp" "cpp" "go" "f" "for" "ftn" "f90" "f95" "f03" "f08" "s" "rs" "hi" "hs" "pyc" ".java"))
+  (dired-rainbow-define executable "#8cc4ff" ("exe" "msi"))
+  (dired-rainbow-define compressed "#51d88a" ("7z" "zip" "bz2" "tgz" "txz" "gz" "xz" "z" "Z" "jar" "war" "ear" "rar" "sar" "xpi" "apk" "xz" "tar"))
+  (dired-rainbow-define packaged "#faad63" ("deb" "rpm" "apk" "jad" "jar" "cab" "pak" "pk3" "vdf" "vpk" "bsp"))
+  (dired-rainbow-define encrypted "#ffed4a" ("gpg" "pgp" "asc" "bfe" "enc" "signature" "sig" "p12" "pem"))
+  (dired-rainbow-define fonts "#6cb2eb" ("afm" "fon" "fnt" "pfb" "pfm" "ttf" "otf"))
+  (dired-rainbow-define partition "#e3342f" ("dmg" "iso" "bin" "nrg" "qcow" "toast" "vcd" "vmdk" "bak"))
+  (dired-rainbow-define vc "#0074d9" ("git" "gitignore" "gitattributes" "gitmodules"))
+  (dired-rainbow-define-chmod executable-unix "#38c172" "-.*x.*"))
 
 (use-package dired-single
   :ensure
@@ -464,57 +546,76 @@
   :defer t)
 
 (evil-collection-define-key 'normal 'dired-mode-map
-    "h" 'dired-single-up-directory
-    "H" 'dired-omit-mode
-    "l" 'dired-single-buffer
-    "y" 'dired-ranger-copy
-    "X" 'dired-ranger-move
-    "p" 'dired-ranger-paste)
+  "h" 'dired-single-up-directory
+  "H" 'dired-omit-mode
+  "l" 'dired-single-buffer
+  "y" 'dired-ranger-copy
+  "X" 'dired-ranger-move
+  "p" 'dired-ranger-paste)
 
 (use-package openwith
+  :disabled
   :ensure
   :defer 1
   :if (display-graphic-p)
   :config
   (setq openwith-associations
         (list
-          (list (openwith-make-extension-regexp
+         (list (openwith-make-extension-regexp
                 '("mpg" "mpeg" "mp3" "mp4"
                   "avi" "wmv" "wav" "mov" "flv"
                   "ogm" "ogg" "mkv"))
-                "open"
-                '(file))
-          (list (openwith-make-extension-regexp
+               "open"
+               '(file))
+         (list (openwith-make-extension-regexp
                 '("xbm" "pbm" "pgm" "ppm" "pnm"
                   "png" "gif" "bmp" "tif" "jpeg")) ;; Removed jpg because Telega was
-                  ;; causing feh to be opened...
-                  "open"
-                  '(file))
-          (list (openwith-make-extension-regexp
+               ;; causing feh to be opened...
+               "open"
+               '(file))
+         (list (openwith-make-extension-regexp
                 '("pdf"))
-                "open"
-                '(file)))))
+               "open"
+               '(file)))))
 
 (use-package org-roam
-  :straight t
+  :ensure t
   :after org
-  :defer t
+  :defer 2
   :custom
-  (org-roam-directory org-agenda-base)
+  (org-roam-directory org-base)
   (org-roam-completion-everywhere t)
   (org-roam-completion-system 'default)
   (org-roam-dailies-directory "journals")
   (org-roam-capture-templates
    '(
      ("d" "default" plain "%?"
-    :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n#+date: %U\n")
-    :unnarrowed t)
+      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n#+date: %U\n")
+      :unnarrowed t)
      )
    )
 
+:config
+(setq org-id-link-to-org-use-id t)
+(require 'org-roam-dailies)
+(org-roam-db-autosync-mode))
+
+(use-package websocket
+  :ensure
+  :after org-roam
+  :commands org-roam-ui-mode)
+
+(use-package org-roam-ui
+  :straight
+  (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
+  :ensure
+  :after org-roam
+  :commands (org-roam-ui-mode)
   :config
-  (require 'org-roam-dailies)
-  (org-roam-db-autosync-mode))
+  (setq org-roam-ui-sync-theme t
+        org-roam-ui-follow t
+        org-roam-ui-update-on-save t
+        org-roam-ui-open-on-start t))
 
 (use-package ledger-mode
   :ensure t
@@ -522,7 +623,7 @@
          "\\.ledger\\'")
   :config
   (add-hook 'ledger-mode-hook #'ledger-flymake-enable)
-)
+  )
 
 (use-package evil-ledger
   :ensure t
@@ -531,7 +632,75 @@
   (setq evil-ledger-sort-key "S")
   (add-hook 'ledger-mode-hook #'evil-ledger-mode))
 
+(use-package org-noter
+  :ensure t
+  :after (:any org pdf-view)
+  :defer t
+  :config
+  (setq org-noter-notes-window-location 'other-frame
+        org-noter-notes-search-path '(pdf-base)
+        org-noter-hide-other nil
+        org-noter-auto-save-last-location t
+        ))
 
+(use-package org-ref
+  :ensure
+  :after org
+  :defer t
+  :config
+  (setq bibtex-dialect 'biblatex)
+  (setq bibtex-completion-library-path pdf-base)
+  (setq bibtex-completion-bibliography '(list bib-base))
+  (setq bibtex-autokey-year-length 4
+        bibtex-autokey-name-year-separator "-"
+        bibtex-autokey-year-title-separator "-"
+        bibtex-autokey-titleword-separator "-"
+        bibtex-autokey-titlewords 2
+        bibtex-autokey-titlewords-stretch 1
+	bibtex-autokey-titleword-length 5)
+  )
+
+(use-package org-roam-bibtex
+  :ensure
+  :after org-roam
+  :defer 1
+  :config
+  (push '(
+	  ("r" "bibliography reference" plain
+           "%?
+         %^{author} published %^{entry-type} in %^{date}: fullcite:%\\1."
+           :target
+           (file+head "references/${citekey}.org" "#+title: ${title}\n")
+           :unnarrowed t)
+	  ) org-roam-capture-templates)
+  (setq citar-open-note-function 'orb-citar-edit-note
+        citar-notes-paths (list bib-base)
+        orb-preformat-keywords '("citekey" "title" "url" "author-or-editor" "keywords" "file")
+        orb-process-file-keyword t
+        orb-file-field-extensions '("pdf")))
+
+(use-package citar
+  :ensure
+  :no-require
+  :defer 1
+  :custom
+  (org-cite-global-bibliography (list bib-base))
+  (org-cite-insert-processor 'citar)
+  (org-cite-follow-processor 'citar)
+  (org-cite-activate-processor 'citar)
+  (citar-bibliography org-cite-global-bibliography)
+  ;; optional: org-cite-insert is also bound to C-c C-x C-@
+  :config
+  (setq citar-open-note-function 'orb-citar-edit-note)
+  ;;(when display-graphic-p (
+  (setq citar-symbols
+	`((file ,(all-the-icons-faicon "file-o" :face 'all-the-icons-green :v-adjust -0.1) . " ")
+          (note ,(all-the-icons-material "speaker_notes" :face 'all-the-icons-blue :v-adjust -0.3) . " ")
+          (link ,(all-the-icons-octicon "link" :face 'all-the-icons-orange :v-adjust 0.01) . " ")))
+  ;;))
+  (setq citar-symbol-separator "  ")
+  :bind
+  (:map org-mode-map :package org ("C-c b" . #'org-cite-insert)))
 
 (use-package magit
   :ensure
@@ -552,6 +721,7 @@
 
 (use-package git-gutter
   :straight git-gutter-fringe
+  :ensure
   :diminish
   :hook ((text-mode . git-gutter-mode)
          (prog-mode . git-gutter-mode))
@@ -570,36 +740,35 @@
   :diminish projectile-mode
   :config
   (projectile-mode)
-)
+  )
 
-(use-package lsp-mode
-  :ensure t
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-         (python-mode . lsp)
-         ;; if you want which-key integration
-         (lsp-mode . lsp-enable-which-key-integration))
-  :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  (setq lsp-keymap-prefix "C-c l")
-    :commands lsp)
-(use-package lsp-ui
-  :ensure t
-  :commands lsp-ui-mode)
+(use-package eglot
+  :ensure
+  :defer 2
+  )
 
-(use-package dap-mode
+(use-package spell-fu
+  :ensure
+  :hook (text-mode . spell-fu-mode)
+  )
+
+(use-package flycheck
   :ensure t
-  :after org
+  :init (global-flycheck-mode)
+  :config
+  (flycheck-add-mode 'proselint 'text-mode)
+  ;;(flycheck-add-next-checker 'lsp 'proselint)
   )
 
 (use-package anaconda-mode
   :ensure t
   :hook (python-mode-hook . anaconda-mode)
   :hook (python-mode-hook . anaconda-eldoc-mode)
-)
+  )
 
 (use-package poetry
- :ensure t
- :hook (python-mode-hook .poetry-tracking-mode))
+  :ensure t
+  :hook (python-mode-hook .poetry-tracking-mode))
 
 (use-package elfeed
   :ensure t
@@ -628,8 +797,7 @@
   :ensure t
   :after elfeed
   :config
-  (elfeed-score-load-score-file "~/.emacs.d/lisp/elfeed/elfeed.score") ; See the elfeed-score documentation for the score file syntax
+  (elfeed-score-load-score-file "~/.emacs.d/lisp/elfeed/elfeed.score")
   (setq elfeed-score-serde-score-file "elfeed.score")
   (elfeed-score-enable)
-  ;;(define-key elfeed-search-mode-map "=" elfeed-score-map)
   )

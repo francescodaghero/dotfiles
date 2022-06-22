@@ -83,6 +83,10 @@ plugins=(git themes vi-mode
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
+# MacOS only
+if [[ `uname` == "Darwin" ]]; then
+        alias ls="gls --color"
+fi
 # History
 setopt HIST_IGNORE_ALL_DUPS
 setopt INC_APPEND_HISTORY
