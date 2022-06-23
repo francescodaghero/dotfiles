@@ -1105,7 +1105,14 @@ A package that should work out-of-the-box with lsp servers
   :ensure
   :defer 2
   )
-
+#+end_src
+** LSP-Bridge
+A new package that however is not working really well over TRAMP. It requires python only and should be faster than the alternatives due to being completely asynchronous.
+#+begin_src emacs-lisp :tangle no
+(use-package lsp-bridge
+  :ensure
+  :defer t
+  )
 #+end_src
 ** LSP-MODE
 It has more features but also far more complex to setup. The UI is nice but i want something that also works in the terminal.
