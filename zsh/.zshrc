@@ -132,7 +132,7 @@ source "$HOME/.scripts"
 # FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_OPTS='--height 50% --layout=reverse --border' #Aspetto
-export FZF_DEFAULT_COMMAND='rg --hidden --ignore .git -l ""' #Ripgrep
+export FZF_DEFAULT_COMMAND='rg --hidden --glob=!.git -l ""' #Ripgrep
 
 # set list-colors to enable filename colorizing
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
