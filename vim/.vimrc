@@ -49,6 +49,8 @@ call plug#begin('~/.vim/plugged')
 
 call plug#end()
 
+" Fix for terminal background and vim background
+let &t_ut=''
 
 " Plugin Setup
 
