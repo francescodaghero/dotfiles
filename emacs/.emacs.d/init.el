@@ -25,7 +25,7 @@
   (load bootstrap-file nil 'nomessage))
 
 ;; Always use straight to install on systems other than Linux
-(setq straight-use-package-by-default (not (eq system-type 'gnu/linux)))
+(setq straight-use-package-by-default t)
 
 ;; Use straight.el for use-package expressions
 (straight-use-package 'use-package)
@@ -60,7 +60,14 @@
   (set-face-attribute 'default nil :font "FiraCode Nerd Font Mono" :weight 'light :height 180) ;; Font
   (set-face-attribute 'fixed-pitch nil :font "FiraCode Nerd Font Mono" :weight 'light :height 180) ;; Font
   (set-face-attribute 'variable-pitch nil :font "FiraCode Nerd Font Mono" :weight 'light :height 180) ;; Font
-  ;; Vertico setup
+  ;; VERTICO SETUP
+  (defun crm-indicator (args)
+        (cons (format "[CRM%s] %s" (replace-regexp-in-string "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" "" crm-separator) (car args)) (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+  ;; Do not allow the cursor in the minibuffer prompt
+  (setq minibuffer-prompt-properties
+  '(read-only t cursor-intangible t face minibuffer-prompt))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
   (setq enable-recursive-minibuffers t)
   :config
   (set-language-environment "UTF-8")
@@ -297,8 +304,7 @@
 (use-package format-all
   :disabled
   :ensure
-  :init
-  ;; TODO Add Black
+  :hook ((python-mode . format-all-mode))
   )
 
 (use-package vertico
@@ -315,7 +321,7 @@
 (use-package orderless
   :ensure t
   :init
-  (setq completion-styles '(orderless)
+  (setq completion-styles '(orderless basic)
         completion-category-defaults nil
         completion-category-overrides '((file (styles . (partial-completion))))))
 (use-package marginalia
