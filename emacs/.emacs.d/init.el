@@ -48,16 +48,6 @@
   (gcmh-high-cons-threshold (* 16 1024 1024))
   (gc-cons-percentage 0.1))
 
-(use-package auto-package-update
-  :ensure t
-  :custom
-  (auto-package-update-interval 7)
-  (auto-package-update-prompt-before-update t)
-  (auto-package-update-hide-results t)
-  :config
-  (auto-package-update-maybe)
-  (auto-package-update-at-time "09:00"))
-
 (setq dropbox-base (getenv "DROPBOX_PATH"))
 (setq org-base (concat dropbox-base "Org"))
 (setq ledger-base (concat dropbox-base "Ledger"))
@@ -95,8 +85,8 @@
 
   )
 (when (display-graphic-p)
-  (set-frame-parameter (selected-frame) 'alpha '(90 . 90))
-  (add-to-list 'default-frame-alist '(alpha . (90 . 90)))
+  ;(set-frame-parameter (selected-frame) 'alpha '(90 . 90))
+  ;(add-to-list 'default-frame-alist '(alpha . (90 . 90)))
   (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
   (add-to-list 'default-frame-alist '(fullscreen . maximized)))
 
@@ -128,11 +118,11 @@
   :ensure t
   :init
   (poke-line-global-mode 1)
-  (setq-default poke-line-pokemon "totodile")
+  (setq-default poke-line-pokemon "aron")
   )
 ;; Modeline
 (use-package doom-modeline
-  :ensure t
+  :straight t
   :init
   (doom-modeline-mode 1)
   :custom
@@ -297,6 +287,7 @@
   "o" '(:ignore t :which-key "Org-Roam")
   "oi" '(org-roam-node-insert :which-key "Insert node")
   "of" '(org-roam-node-find :which-key "Find node")
+  "ob" '(helm-bibtex :which-key "Show bibtex entries")
  )
 
 (use-package ws-butler
@@ -321,14 +312,12 @@
 (use-package savehist
   :init
   (savehist-mode))
-
 (use-package orderless
   :ensure t
   :init
   (setq completion-styles '(orderless)
         completion-category-defaults nil
         completion-category-overrides '((file (styles . (partial-completion))))))
-
 (use-package marginalia
   :after vertico
   :straight t
@@ -336,7 +325,6 @@
   (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
   :init
   (marginalia-mode))
-
 (use-package consult
   :ensure t
   :demand t
@@ -351,7 +339,6 @@
   ;;(consult-project-root-function #'dw/get-project-root)
   (completion-in-region-function #'consult-completion-in-region)
 )
-
 (use-package embark
   :ensure t
   :bind (("C-S-a" . embark-act)
@@ -395,10 +382,14 @@
   (visual-line-mode 1)
   )
 (use-package org
+  :straight nil
+  :ensure nil
   :mode ("\\.org\\'" . org-mode)
   :defer
   :init
   (add-hook 'org-mode-hook 'cst-org)
+  :custom
+  (org-directory org-base)
   :config
   (setq org-link-file-path-type 'relative)
 
@@ -589,10 +580,10 @@
   (org-roam-dailies-directory "journals")
   (org-roam-capture-templates
    '(
+     ;; Default template
      ("d" "default" plain "%?"
-      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n#+date: %U\n")
-      :unnarrowed t)
-     )
+      :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n#+date: %U\n")
+      :unnarrowed t))
    )
 
 :config
@@ -632,6 +623,22 @@
   (setq evil-ledger-sort-key "S")
   (add-hook 'ledger-mode-hook #'evil-ledger-mode))
 
+(use-package citar
+  :ensure
+  :defer t
+  :bind (("C-c b" . citar-insert-citation)
+         :map minibuffer-local-map
+         ("M-b" . citar-insert-preset))
+  :custom
+  (citar-bibliography '(list bib-base))
+  (when (window-system)
+    (setq citar-symbols
+      `((file ,(all-the-icons-faicon "file-o" :face 'all-the-icons-green :v-adjust -0.1) . " ")
+        (note ,(all-the-icons-material "speaker_notes" :face 'all-the-icons-blue :v-adjust -0.3) . " ")
+        (link ,(all-the-icons-octicon "link" :face 'all-the-icons-orange :v-adjust 0.01) . " ")))
+    (setq citar-symbol-separator "  "))
+  )
+
 (use-package org-noter
   :ensure t
   :after (:any org pdf-view)
@@ -659,48 +666,6 @@
         bibtex-autokey-titlewords-stretch 1
 	bibtex-autokey-titleword-length 5)
   )
-
-(use-package org-roam-bibtex
-  :ensure
-  :after org-roam
-  :defer 1
-  :config
-  (push '(
-	  ("r" "bibliography reference" plain
-           "%?
-         %^{author} published %^{entry-type} in %^{date}: fullcite:%\\1."
-           :target
-           (file+head "references/${citekey}.org" "#+title: ${title}\n")
-           :unnarrowed t)
-	  ) org-roam-capture-templates)
-  (setq citar-open-note-function 'orb-citar-edit-note
-        citar-notes-paths (list bib-base)
-        orb-preformat-keywords '("citekey" "title" "url" "author-or-editor" "keywords" "file")
-        orb-process-file-keyword t
-        orb-file-field-extensions '("pdf")))
-
-(use-package citar
-  :ensure
-  :no-require
-  :defer 1
-  :custom
-  (org-cite-global-bibliography (list bib-base))
-  (org-cite-insert-processor 'citar)
-  (org-cite-follow-processor 'citar)
-  (org-cite-activate-processor 'citar)
-  (citar-bibliography org-cite-global-bibliography)
-  ;; optional: org-cite-insert is also bound to C-c C-x C-@
-  :config
-  (setq citar-open-note-function 'orb-citar-edit-note)
-  ;;(when display-graphic-p (
-  (setq citar-symbols
-	`((file ,(all-the-icons-faicon "file-o" :face 'all-the-icons-green :v-adjust -0.1) . " ")
-          (note ,(all-the-icons-material "speaker_notes" :face 'all-the-icons-blue :v-adjust -0.3) . " ")
-          (link ,(all-the-icons-octicon "link" :face 'all-the-icons-orange :v-adjust 0.01) . " ")))
-  ;;))
-  (setq citar-symbol-separator "  ")
-  :bind
-  (:map org-mode-map :package org ("C-c b" . #'org-cite-insert)))
 
 (use-package magit
   :ensure
@@ -747,9 +712,8 @@
   :defer 2
   )
 
-(use-package spell-fu
-  :ensure
-  :hook (text-mode . spell-fu-mode)
+(use-package flyspell
+  :hook (text-mode . flyspell-mode)
   )
 
 (use-package flycheck
@@ -759,6 +723,8 @@
   (flycheck-add-mode 'proselint 'text-mode)
   ;;(flycheck-add-next-checker 'lsp 'proselint)
   )
+
+
 
 (use-package anaconda-mode
   :ensure t

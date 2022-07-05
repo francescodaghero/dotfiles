@@ -225,7 +225,7 @@ Move additional folders (compilations etc) to a .cache directory in the home fol
 #+end_src
 ** Package updates
 Keep the packages updated.
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package auto-package-update
   :ensure t
   :custom
@@ -278,8 +278,8 @@ Load some environmental variables.
 
   )
 (when (display-graphic-p)
-  (set-frame-parameter (selected-frame) 'alpha '(90 . 90))
-  (add-to-list 'default-frame-alist '(alpha . (90 . 90)))
+  ;(set-frame-parameter (selected-frame) 'alpha '(90 . 90))
+  ;(add-to-list 'default-frame-alist '(alpha . (90 . 90)))
   (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
   (add-to-list 'default-frame-alist '(fullscreen . maximized)))
 #+end_src
@@ -332,11 +332,11 @@ Lower the load when large files are loaded.
   :ensure t
   :init
   (poke-line-global-mode 1)
-  (setq-default poke-line-pokemon "totodile")
+  (setq-default poke-line-pokemon "aron")
   )
 ;; Modeline
 (use-package doom-modeline
-  :ensure t
+  :straight t
   :init
   (doom-modeline-mode 1)
   :custom
@@ -529,6 +529,7 @@ Describe the keybind with a custom message
   "o" '(:ignore t :which-key "Org-Roam")
   "oi" '(org-roam-node-insert :which-key "Insert node")
   "of" '(org-roam-node-find :which-key "Find node")
+  "ob" '(helm-bibtex :which-key "Show bibtex entries")
  )
 
 #+end_src
@@ -553,8 +554,6 @@ Base package to handle multiple formatters.
 * Completion frameworks
 ** Vertico
 Completion framework for the minibuffer.
-*** Vertico
-Base module.
 #+begin_src emacs-lisp
 (use-package vertico
   :ensure t
@@ -567,19 +566,12 @@ Base module.
 (use-package savehist
   :init
   (savehist-mode))
-#+end_src
-*** Orderless
-#+begin_src emacs-lisp
 (use-package orderless
   :ensure t
   :init
   (setq completion-styles '(orderless)
         completion-category-defaults nil
         completion-category-overrides '((file (styles . (partial-completion))))))
-#+end_src
-*** Marginalia
-Useful annotations on the minibuffer for easier selection.
-#+begin_src emacs-lisp
 (use-package marginalia
   :after vertico
   :straight t
@@ -587,10 +579,6 @@ Useful annotations on the minibuffer for easier selection.
   (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
   :init
   (marginalia-mode))
-#+end_src
-*** Consult
-Context based actions.
-#+begin_src emacs-lisp
 (use-package consult
   :ensure t
   :demand t
@@ -605,9 +593,6 @@ Context based actions.
   ;;(consult-project-root-function #'dw/get-project-root)
   (completion-in-region-function #'consult-completion-in-region)
 )
-#+end_src
-*** Embark
-#+begin_src emacs-lisp
 (use-package embark
   :ensure t
   :bind (("C-S-a" . embark-act)
@@ -630,12 +615,79 @@ Context based actions.
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 #+end_src
+** Helm
+Less configuration hassle.
+#+begin_src emacs-lisp :tangle no
+(use-package helm
+  :straight t
+  :preface (require 'helm-config)
+  :config
+  (global-set-key (kbd "M-x") 'helm-M-x)
+  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  (setq helm-M-x-fuzzy-match t)
+  (helm-mode 1)
+  )
+#+end_src
+** Ivy
+#+begin_src emacs-lisp :tangle no
+(use-package ivy
+  :diminish
+  :bind (("C-s" . swiper)
+         :map ivy-minibuffer-map
+         ("TAB" . ivy-alt-done)
+         ("C-f" . ivy-alt-done)
+         ("C-l" . ivy-alt-done)
+         ("C-j" . ivy-next-line)
+         ("C-k" . ivy-previous-line)
+         :map ivy-switch-buffer-map
+         ("C-k" . ivy-previous-line)
+         ("C-l" . ivy-done)
+         ("C-d" . ivy-switch-buffer-kill)
+         :map ivy-reverse-i-search-map
+         ("C-k" . ivy-previous-line)
+         ("C-d" . ivy-reverse-i-search-kill))
+  :init
+  (ivy-mode 1)
+  :config
+  (setq ivy-use-virtual-buffers t)
+  (setq ivy-wrap t)
+  (setq ivy-count-format "(%d/%d) ")
+  (setq enable-recursive-minibuffers t)
+  )
+
+(use-package counsel
+  :demand t
+  :bind (("M-x" . counsel-M-x)
+         ("C-x b" . counsel-ibuffer)
+         ("C-x C-f" . counsel-find-file)
+         ;; ("C-M-j" . counsel-switch-buffer)
+         ("C-M-l" . counsel-imenu)
+         :map minibuffer-local-map
+         ("C-r" . 'counsel-minibuffer-history))
+  :custom
+  (counsel-linux-app-format-function #'counsel-linux-app-format-function-name-only)
+  :config
+  (setq ivy-initial-inputs-alist nil)) ;; Don't start searches with ^
+
+#+end_src
 ** Company completion
 #+begin_src emacs-lisp
 (use-package company
   :ensure
   :config
   (global-company-mode))
+#+end_src
+*** TODO Company async
+Adds path to a dictionary with possible completions.
+#+begin_src emacs-lisp :tangle no
+(use-package company-dict
+  :ensure
+  :after company
+  :config
+  (setq company-dict-dir (concat original-user-emacs-directory "dict"))
+  (add-to-list 'company-backends 'company-dict)
+  (define-key evil-insert-state-map (kbd "C-x C-k") 'company-dict)
+  )
 #+end_src
 * Org mode
 ** Org
@@ -660,10 +712,14 @@ Fast selection of the nodes with a TODO heading.
   (visual-line-mode 1)
   )
 (use-package org
+  :straight nil
+  :ensure nil
   :mode ("\\.org\\'" . org-mode)
   :defer
   :init
   (add-hook 'org-mode-hook 'cst-org)
+  :custom
+  (org-directory org-base)
   :config
   (setq org-link-file-path-type 'relative)
 #+end_src
@@ -769,6 +825,8 @@ Keybindings : C+M+- and C+M+=.
   :ensure
   :hook (org-mode . org-appear-mode))
 #+end_src
+* Calendar
+
 * File browsing
 ** Dired
 A better file manager. The setup on MacOS requires:
@@ -903,10 +961,10 @@ The best part of Emacs.
   (org-roam-dailies-directory "journals")
   (org-roam-capture-templates
    '(
+     ;; Default template
      ("d" "default" plain "%?"
-      :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n#+date: %U\n")
-      :unnarrowed t)
-     )
+      :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n#+date: %U\n")
+      :unnarrowed t))
    )
 #+end_src
 *** Config
@@ -956,6 +1014,24 @@ The best part of Emacs.
   (add-hook 'ledger-mode-hook #'evil-ledger-mode))
 #+end_src
 * Bibtex
+** Citar
+#+begin_src emacs-lisp
+(use-package citar
+  :ensure
+  :defer t
+  :bind (("C-c b" . citar-insert-citation)
+         :map minibuffer-local-map
+         ("M-b" . citar-insert-preset))
+  :custom
+  (citar-bibliography '(list bib-base))
+  (when (window-system)
+    (setq citar-symbols
+      `((file ,(all-the-icons-faicon "file-o" :face 'all-the-icons-green :v-adjust -0.1) . " ")
+        (note ,(all-the-icons-material "speaker_notes" :face 'all-the-icons-blue :v-adjust -0.3) . " ")
+        (link ,(all-the-icons-octicon "link" :face 'all-the-icons-orange :v-adjust 0.01) . " ")))
+    (setq citar-symbol-separator "  "))
+  )
+#+end_src
 ** Org-Noter
 #+begin_src emacs-lisp
 (use-package org-noter
@@ -989,51 +1065,66 @@ The best part of Emacs.
   )
 #+end_src
 ** Org Roam Bibtex
-#+begin_src emacs-lisp
+Currently disabled, works fine with ivy and helm but it is difficult to run with citar. I prefer having the Org roam directory with no nodes from papers, instead I'd rather tag manually the notes and filter them.
+Complex syntax here.
+The template is added with push to the list, but it has a variable inside that we want expanded before the insertion. The first step is pushing to  the list with a "`" (backtick) instead of "'". Then a ","  is added in front of the variable to be expanded.
+The node insertion works by calling ivy-actions when hovering on the bibtex entry. The base keybind is "M-o".
+#+begin_src emacs-lisp :tangle no
+(setq template-base (concat emacs-original-dir "templates/"))
+(setq reference-template-base (concat template-base "reference_note.org"))
 (use-package org-roam-bibtex
   :ensure
-  :after org-roam
-  :defer 1
-  :config
-  (push '(
-	  ("r" "bibliography reference" plain
-           "%?
-         %^{author} published %^{entry-type} in %^{date}: fullcite:%\\1."
-           :target
-           (file+head "references/${citekey}.org" "#+title: ${title}\n")
-           :unnarrowed t)
-	  ) org-roam-capture-templates)
-  (setq citar-open-note-function 'orb-citar-edit-note
-        citar-notes-paths (list bib-base)
-        orb-preformat-keywords '("citekey" "title" "url" "author-or-editor" "keywords" "file")
-        orb-process-file-keyword t
-        orb-file-field-extensions '("pdf")))
-#+end_src
-** Citar
-Completion framework
-#+begin_src emacs-lisp
-(use-package citar
-  :ensure
-  :no-require
+  :after helm-bibtex
   :defer 1
   :custom
-  (org-cite-global-bibliography (list bib-base))
-  (org-cite-insert-processor 'citar)
-  (org-cite-follow-processor 'citar)
-  (org-cite-activate-processor 'citar)
-  (citar-bibliography org-cite-global-bibliography)
-  ;; optional: org-cite-insert is also bound to C-c C-x C-@
+  (orb-note-actions-interface 'helm)
   :config
-  (setq citar-open-note-function 'orb-citar-edit-note)
-  ;;(when display-graphic-p (
-  (setq citar-symbols
-	`((file ,(all-the-icons-faicon "file-o" :face 'all-the-icons-green :v-adjust -0.1) . " ")
-          (note ,(all-the-icons-material "speaker_notes" :face 'all-the-icons-blue :v-adjust -0.3) . " ")
-          (link ,(all-the-icons-octicon "link" :face 'all-the-icons-orange :v-adjust 0.01) . " ")))
-  ;;))
-  (setq citar-symbol-separator "  ")
-  :bind
-  (:map org-mode-map :package org ("C-c b" . #'org-cite-insert)))
+  (setq
+        orb-preformat-keywords '("citekey" "title" "url" "author-or-editor" "keywords" "file")
+        orb-process-file-keyword nil
+        orb-file-field-extensions '("pdf"))
+  (push
+      ;; Literature template
+     `("r" "bibliography reference" plain
+        (file ,reference-template-base)
+	    :target (file+head "${citekey}.org" "#+title:${title}\n")
+        :unnarrowed t
+	    :immediate-finish t)
+     org-roam-capture-templates)
+  (setq orb-insert-interface 'helm-bibtex)
+  (setq orb-note-actions-interface 'helm)
+  (require 'org-ref)
+  (require 'orb-helm)
+  (org-roam-bibtex-mode)
+  )
+#+end_src
+** Helm-Bib
+#+begin_src emacs-lisp :tangle no
+(use-package helm-bibtex
+  :ensure
+  :defer t
+  :init
+  (setq bibtex-completion-bibliography (list bib-base))
+  (setq bibtex-completion-pdf-field "File")
+  (setq bibtex-completion-notes-path (concat dropbox-base "Notes/"))
+  (setq helm-bibtex-full-frame 'nil )
+  (setq bibtex-completion-additional-search-fields '(tags))
+  )
+#+end_src
+** Ivy-bib
+#+begin_src emacs-lisp :tangle no
+(use-package ivy-bibtex
+  :ensure
+  :after ivy
+  :defer t
+  :init
+  (setq ivy-re-builders-alist
+      '((ivy-bibtex . ivy--regex-ignore-order)
+        (t . ivy--regex-plus)))
+  (setq bibtex-completion-bibliography bib-base)
+  (setq bibtex-completion-pdf-field "File")
+  (setq bibtex-completion-notes-path org-base);;(concat dropbox-base "Notes/"))
+  )
 #+end_src
 * Git
 ** Magit
@@ -1142,15 +1233,28 @@ It has more features but also far more complex to setup. The UI is nice but i wa
   )
 #+end_src
 * Syntax check
+** Text
+*** Spell-fu
 Required:
 - aspell
 On MacOS be careful of the environmental variable LANG when generating the dictionary for the first time.
-#+begin_src emacs-lisp
+I cannot exclude org-blocks code at the moment.
+#+begin_src emacs-lisp :tangle no
 (use-package spell-fu
   :ensure
   :hook (text-mode . spell-fu-mode)
+  :config
+  (setq global-spell-fu-ignore-buffer (lambda (buf) (buffer-local-value  'buffer-read-only buf)))
   )
 #+end_src
+*** Flyspell
+Far slower
+#+begin_src emacs-lisp
+(use-package flyspell
+  :hook (text-mode . flyspell-mode)
+  )
+#+end_src
+** Prose
 Prose checking, requiring proselint installed.
 #+begin_src emacs-lisp
 (use-package flycheck
@@ -1160,6 +1264,10 @@ Prose checking, requiring proselint installed.
   (flycheck-add-mode 'proselint 'text-mode)
   ;;(flycheck-add-next-checker 'lsp 'proselint)
   )
+#+end_src
+* Presenting
+Simple presentations with Org.
+#+begin_src emacs-lisp
 #+end_src
 * Programming
 ** Python

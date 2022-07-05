@@ -1,0 +1,11 @@
+- tags ::
+- keywords :: %^{keywords}
+
+* %^{title}
+:PROPERTIES:
+:Custom_ID: %^{citekey}
+:URL: %^{url}
+:AUTHOR: %^{author-or-editor}
+:NOTER_DOCUMENT: ../../Zotero/Attachments/%^{file}  ; <== special file keyword: if more than one filename
+:NOTER_PAGE:               ;     is available, the user will be prompted to choose
+:END:
