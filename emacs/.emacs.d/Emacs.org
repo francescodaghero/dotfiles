@@ -552,7 +552,6 @@ Remove empty whitelines.
 Base package to handle multiple formatters.
 #+begin_src emacs-lisp
 (use-package format-all
-  :disabled
   :ensure
   :hook ((python-mode . format-all-mode))
   )

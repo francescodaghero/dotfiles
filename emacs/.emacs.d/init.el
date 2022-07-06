@@ -302,7 +302,6 @@
          (prog-mode . ws-butler-mode)))
 
 (use-package format-all
-  :disabled
   :ensure
   :hook ((python-mode . format-all-mode))
   )

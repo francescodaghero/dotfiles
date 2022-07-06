@@ -43,7 +43,7 @@ call plug#begin('~/.vim/plugged')
     " Completion/Linting/Fixing
     Plug 'ackyshake/VimCompletesMe'
     Plug 'sheerun/vim-polyglot', Cond(!has('nvim'))
-    Plug 'numirias/semshi', Cond(has('nvim'))
+    " Plug 'numirias/semshi', Cond(has('nvim'))
 
     " Plug 'https://github.com/preservim/vimux' " comandi direttamente da vim
 
