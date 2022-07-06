@@ -277,11 +277,19 @@
   (which-key-mode)
 )
 
+(defun fd/reload-config ()
+  (interactive)
+  (org-babel-tangle)
+  (load-file user-init-file)
+)
 (fd/supreme-leader
-  "c" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
   "a" '(org-agenda :which-key "Agenda")
   "SPC" '(find-file :which-key "Find file")
   "w" '(save-buffer :which-key "Save file")
+  ;; Configurations
+  "c" '(:ignore t :which-key "config")
+  "co" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
+  "cr" '(fd/reload-config :which-key "reload config")
   ;; Windows
   "f" '(:ignore t :which-key "Frame")
   "fv" '(split-window-vertically :which-key "Vertical Split")
@@ -290,7 +298,7 @@
   ;; Buffers
   "b" '(:ignore t :which-key "Buffers")
   "be" '(eval-buffer :which-key "Eval")
-  ;; Roam!
+  ;; Roam
   "o" '(:ignore t :which-key "Org-Roam")
   "oi" '(org-roam-node-insert :which-key "Insert node")
   "of" '(org-roam-node-find :which-key "Find node")
@@ -401,7 +409,7 @@
 (setq string-todos '("TODO" "ACTIVE" "DONE" "HOLD" "CANCELED"))
 (setq locregex (string-join string-todos "|"))
 (setq org-agenda-base org-base)
-(setq org-agenda-files '(my/update-agenda))
+(setq org-agenda-files  (my/update-agenda))
 (setq org-todo-keywords
       '((sequence "TODO(t@)" "ACTIVE(a@)" "|" "DONE(d@)") ;;   Generali
         (sequence  "|" "HOLD(h@)" "CANCELED(c@)")
@@ -712,11 +720,6 @@
   (projectile-mode)
   )
 
-(use-package eglot
-  :ensure
-  :defer 2
-  )
-
 (use-package flyspell
   :hook (text-mode . flyspell-mode)
   )
@@ -731,15 +734,11 @@
 
 
 
-(use-package anaconda-mode
+(use-package elpy
   :ensure t
-  :hook (python-mode-hook . anaconda-mode)
-  :hook (python-mode-hook . anaconda-eldoc-mode)
-  )
-
-(use-package poetry
-  :ensure t
-  :hook (python-mode-hook .poetry-tracking-mode))
+  :defer t
+  :init
+  (advice-add 'python-mode :before 'elpy-enable))
 
 (use-package elfeed
   :ensure t
