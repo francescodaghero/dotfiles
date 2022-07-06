@@ -519,11 +519,19 @@ Describe the keybind with a custom message
 #+end_src
 ** General keybinds
 #+begin_src emacs-lisp
+(defun fd/reload-config ()
+  (interactive)
+  (org-babel-tangle)
+  (load-file user-init-file)
+)
 (fd/supreme-leader
-  "c" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
   "a" '(org-agenda :which-key "Agenda")
   "SPC" '(find-file :which-key "Find file")
   "w" '(save-buffer :which-key "Save file")
+  ;; Configurations
+  "c" '(:ignore t :which-key "config")
+  "co" '((lambda () (interactive) (find-file "~/.emacs.d/Emacs.org")) :which-key "Open Configuration")
+  "cr" '(fd/reload-config :which-key "reload config")
   ;; Windows
   "f" '(:ignore t :which-key "Frame")
   "fv" '(split-window-vertically :which-key "Vertical Split")
@@ -532,7 +540,7 @@ Describe the keybind with a custom message
   ;; Buffers
   "b" '(:ignore t :which-key "Buffers")
   "be" '(eval-buffer :which-key "Eval")
-  ;; Roam!
+  ;; Roam
   "o" '(:ignore t :which-key "Org-Roam")
   "oi" '(org-roam-node-insert :which-key "Insert node")
   "of" '(org-roam-node-find :which-key "Find node")
@@ -735,7 +743,7 @@ Fast selection of the nodes with a TODO heading.
 (setq string-todos '("TODO" "ACTIVE" "DONE" "HOLD" "CANCELED"))
 (setq locregex (string-join string-todos "|"))
 (setq org-agenda-base org-base)
-(setq org-agenda-files '(my/update-agenda))
+(setq org-agenda-files  (my/update-agenda))
 (setq org-todo-keywords
       '((sequence "TODO(t@)" "ACTIVE(a@)" "|" "DONE(d@)") ;;   Generali
         (sequence  "|" "HOLD(h@)" "CANCELED(c@)")
@@ -1196,8 +1204,8 @@ Open links to the base repo with a single keybind.
 #+end_src
 * LSP
 ** Eglot
-A package that should work out-of-the-box with lsp servers
-#+begin_src emacs-lisp
+A package that should work out-of-the-box with lsp servers, but doesn't. Virtualenvs are hard to setup.
+#+begin_src emacs-lisp :tangle no
 (use-package eglot
   :ensure
   :defer 2
@@ -1277,7 +1285,16 @@ Simple presentations with Org.
 #+end_src
 * Programming
 ** Python
+*** IDE
 #+begin_src emacs-lisp
+(use-package elpy
+  :ensure t
+  :defer t
+  :init
+  (advice-add 'python-mode :before 'elpy-enable))
+#+end_src
+*** Environments
+#+begin_src emacs-lisp :tangle no
 (use-package anaconda-mode
   :ensure t
   :hook (python-mode-hook . anaconda-mode)
@@ -1285,7 +1302,7 @@ Simple presentations with Org.
   )
 #+end_src
 *** Poetry
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package poetry
   :ensure t
   :hook (python-mode-hook .poetry-tracking-mode))
@@ -1330,8 +1347,3 @@ Read the arxiv feed in an alternative way.
   (elfeed-score-enable)
   )
 #+end_src
-* Local Variables
-;; Local Variables:
-;; eval: (add-hook 'after-save-hook (lambda ()(if (y-or-n-p "Reload?")(load-file user-init-file))) nil t)
-;; eval: (add-hook 'after-save-hook (lambda ()(if (y-or-n-p "Tangle?")(org-babel-tangle))) nil t)
-;; End:
