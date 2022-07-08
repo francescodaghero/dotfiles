@@ -1,3 +1,4 @@
+[[ $TERM == "dumb" ]] && unsetopt zle && PS1='$ ' && return
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -70,18 +71,35 @@ ZSH_THEME="philips"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git themes tmux vi-mode
-        #zsh-interactive-cd
-        #zsh-autosuggestions
+plugins=(git themes vi-mode
         fzf-tab
         zsh-syntax-highlighting
+        zsh-interactive-cd
+        z
         poetry
         poetry_shell
         )
 
 source $ZSH/oh-my-zsh.sh
+# Truecolor for emacs in tmux
+# Follow the guide here: https://github.com/syl20bnr/spacemacs/wiki/Terminal
+if [[ `uname` == "Linux" ]]; then
+        export TERM=xterm-24bit
+fi
+alias ssh="TERM=xterm-256color ssh"
 
 # User configuration
+# MacOS only
+if [[ `uname` == "Darwin" ]]; then
+        alias ls="gls --color"
+fi
+# History
+setopt HIST_IGNORE_ALL_DUPS
+setopt INC_APPEND_HISTORY
+setopt EXTENDED_HISTORY
+setopt SHARE_HISTORY
+export SAVEHIST=10000000
+export HISTSIZE=10000000
 
 #-----------------Globbing--------------------#
 setopt extendedglob                           #
@@ -93,9 +111,9 @@ export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='nvim'
+  export EDITOR='vim'
 else
-  export EDITOR='nvim'
+  export EDITOR='vim'
 fi
 
 # Compilation flags
@@ -109,31 +127,31 @@ fi
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-source "$HOME/.bash_aliases"
+# source "$HOME/.bash_aliases"
 
 # Funzioni
-source "$HOME/"
+source "$HOME/.scripts"
 
 # LS_COLORS
-. "$HOME/.local/share/lscolors.sh"
+. "$HOME/.scripts/LS_COLORS/lscolors.sh"
 
 # FZF
-export FZF_DEFAULT_OPTS='--height 50% --layout=reverse --border' #Aspetto
-export FZF_DEFAULT_COMMAND='rg --hidden --ignore .git -l ""' #Ripgrep
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+export FZF_DEFAULT_OPTS='--height 50% --layout=reverse --border' #Aspetto
+export FZF_DEFAULT_COMMAND='rg --hidden --glob=!.git -l ""' #Ripgrep
+
+# set list-colors to enable filename colorizing
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 
 # FZF - TAB
 # https://github.com/Aloxaf/fzf-tab/wiki/Configuration
 # disable sort when completing options of any command
 zstyle ':completion:complete:*:options' sort false
-
 # set descriptions format to enable group support
 zstyle ':completion:*:descriptions' format '[%d]'
-
-# set list-colors to enable filename colorizing
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-
 # switch group using `,` and `.`
 zstyle ':fzf-tab:*' switch-group ',' '.'
 zstyle ':fzf-tab:*' prefix ''
 setopt glob_dots
+# Direnv
+eval "$(direnv hook zsh)"

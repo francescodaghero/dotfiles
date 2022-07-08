@@ -1,0 +1,19 @@
+[[https://www.gnu.org/software/emacs/][https://img.shields.io/badge/Emacs-%237F5AB6.svg?&style=for-the-badge&logo=gnu-emacs&logoColor=white]]
+
+#+title: Dotfiles
+#+author: Francesco Daghero
+#+mail: francesco.daghero@polito.it
+
+* Overview
+The complete setup to be cloned on a new machine. "Tested" on Ubuntu and MacOS.
+* Instructions
+Clone the repository in the home folder and then symlink the content of each directory to the correct position. This can be handled easily with GNU Stow.
+* Dependencies
+- Emacs
+- Zsh
+- Oh-My-Zsh
+- Tmux
+- Vim
+- fzf
+- ripgrep
+- bat
