@@ -25,14 +25,13 @@ call plug#begin('~/.vim/plugged')
     " Bars/UI
     Plug 'vim-airline/vim-airline' " Barra airline
     Plug 'vim-airline/vim-airline-themes' "Temi per airline
-    Plug 'edkolev/tmuxline.vim' " Barra Tmux
+    " Plug 'edkolev/tmuxline.vim' " Barra Tmux
     Plug 'scrooloose/nerdtree' " Albero files
 
     " Projetcs handling
     Plug 'preservim/tagbar'
     "Plug 'airblade/vim-gitgutter' " Piccoli + dove si ha codice non commitato
     Plug 'mhinz/vim-signify'
-    Plug 'puremourning/vimspector' " Debugging
 
     " Jumps, Moves and Searches
     Plug 'fisadev/FixedTaskList.vim' " Search TODO, FIXME, XXX in current file
@@ -43,9 +42,6 @@ call plug#begin('~/.vim/plugged')
     " Completion/Linting/Fixing
     Plug 'ackyshake/VimCompletesMe'
     Plug 'sheerun/vim-polyglot', Cond(!has('nvim'))
-    " Plug 'numirias/semshi', Cond(has('nvim'))
-
-    " Plug 'https://github.com/preservim/vimux' " comandi direttamente da vim
 
 call plug#end()
 
