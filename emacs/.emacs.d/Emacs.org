@@ -1,84 +1,6 @@
 #+title: Emacs Configuration
 #+PROPERTY: header-args:emacs-lisp :tangle ./init.el :mkdirp yes
-* Contents :TOC:QUOTE:
-#+BEGIN_QUOTE
-- [[#early-init][Early-Init]]
-  - [[#cache-and-additional-directories][Cache and additional directories]]
-  - [[#garbage-collector-and-warnings][Garbage collector and warnings]]
-  - [[#ui-tweaks][UI tweaks]]
-  - [[#startup-speedup][Startup speedup]]
-- [[#emacs-literate-config-file][Emacs literate config file]]
-- [[#startup-config][Startup config]]
-  - [[#loading-time][Loading time]]
-  - [[#package-manager][Package Manager]]
-  - [[#clean-emacsd-folder][Clean .emacs.d folder]]
-  - [[#garbage-collection][Garbage collection]]
-  - [[#package-updates][Package updates]]
-- [[#env-variables][ENV variables]]
-- [[#main-config][Main config]]
-  - [[#tramp][Tramp]]
-  - [[#macos][MacOS]]
-- [[#long-files-setup][Long files setup]]
-- [[#ui][UI]]
-  - [[#theme][Theme]]
-  - [[#modeline][Modeline]]
-  - [[#dashboard][Dashboard]]
-  - [[#code-blocks][Code-blocks]]
-  - [[#focus][Focus]]
-- [[#evil][Evil]]
-  - [[#evil-undo-fo][Evil-undo-fo]]
-  - [[#evil-1][Evil]]
-  - [[#evil-collection-e-setup][Evil-collection e setup]]
-  - [[#evil-agenda][Evil-agenda]]
-  - [[#folding][Folding]]
-- [[#keybinds][Keybinds]]
-  - [[#general-el-keybinds-con-prefisso][General-el: keybinds con prefisso]]
-  - [[#general-keybinds][General keybinds]]
-- [[#formatters][Formatters]]
-  - [[#text][Text]]
-  - [[#code][Code]]
-- [[#completion-frameworks][Completion frameworks]]
-  - [[#vertico][Vertico]]
-  - [[#company-completion][Company completion]]
-- [[#org-mode][Org mode]]
-  - [[#org][Org]]
-  - [[#org-ql][Org-ql]]
-  - [[#super-agenda][Super agenda]]
-  - [[#table-of-contents][Table-of-contents]]
-  - [[#ui-1][UI]]
-- [[#file-browsing][File browsing]]
-  - [[#dired][Dired]]
-  - [[#openfile][OpenFile]]
-- [[#org-roam][Org roam]]
-  - [[#additional-functions][Additional functions]]
-  - [[#config][Config]]
-- [[#ledger][Ledger]]
-  - [[#evil-ledger][Evil Ledger]]
-- [[#bibtex][Bibtex]]
-  - [[#org-noter][Org-Noter]]
-  - [[#org-ref][Org-Ref]]
-  - [[#org-roam-bibtex][Org Roam Bibtex]]
-  - [[#citar][Citar]]
-- [[#git][Git]]
-  - [[#magit][Magit]]
-  - [[#git-link][Git-link]]
-  - [[#git-gut][Git-gut]]
-- [[#projects][Projects]]
-  - [[#projectile][Projectile]]
-  - [[#perspective][Perspective]]
-- [[#lsp][LSP]]
-  - [[#general-setup][General setup]]
-  - [[#debugger][Debugger]]
-- [[#syntax-check][Syntax check]]
-- [[#programming][Programming]]
-  - [[#python][Python]]
-- [[#elfeed][Elfeed]]
-  - [[#elfeed-base][Elfeed base]]
-  - [[#elfeed-arxiv-keybinds][Elfeed Arxiv: Keybinds]]
-  - [[#elfeed-score][Elfeed Score]]
-- [[#local-variables][Local Variables]]
-#+END_QUOTE
-
+* Contents
 * Early-Init
 Configurations to be loaded immediately in the early-init.el
 #+begin_src emacs-lisp :tangle early-init.el
@@ -706,7 +628,7 @@ Adds path to a dictionary with possible completions.
 ** Org
 *** Org-roam-agenda functions
 Fast selection of the nodes with a TODO heading.
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defun my/agenda-fetch ()
   ;;(interactive)
   (split-string
@@ -720,29 +642,59 @@ Fast selection of the nodes with a TODO heading.
 #+end_src
 *** Init
 #+begin_src emacs-lisp
-(defun cst-org ()
-  (org-indent-mode)
-  (visual-line-mode 1)
-  )
+(defun fd/refresh-org-agenda-files ()
+       (interactive)
+       (setq org-agenda-files (directory-files-recursively org-agenda-base "\\.org$")))
+
+(defun fd/agenda-above-folder ()
+      "Give the directory of (buffer-file-name), and replace the home path by '~'"
+      (interactive)
+      (string-replace "/" ""
+      (string-replace org-agenda-base ""
+		      ;;(concat "~/" (file-name-directory (file-relative-name (buffer-file-name) (expand-file-name "~"))))
+		      (file-name-directory buffer-file-name)
+      )
+      )
+    )
+(use-package cl-lib)
+(defun fd/agenda-roam-name ()
+      (interactive)
+  (replace-regexp-in-string "\\([0-9]+\\)-" "" (file-name-base buffer-file-name))
+    )
+
+    (defun cst-org ()
+	  (org-indent-mode)
+	  (visual-line-mode 1)
+     )
 (use-package org
-  :straight nil
-  :ensure nil
-  :mode ("\\.org\\'" . org-mode)
-  :defer
-  :init
-  (add-hook 'org-mode-hook 'cst-org)
-  :custom
-  (org-directory org-base)
-  :config
-  (setq org-link-file-path-type 'relative)
+      :straight nil
+      :ensure nil
+      :mode ("\\.org\\'" . org-mode)
+      :defer
+      :init
+      (add-hook 'org-mode-hook 'cst-org)
+      :custom
+      (org-directory org-base)
+      :config
+      (setq org-agenda-prefix-format '(
+      	(agenda  . " [%(fd/agenda-roam-name)] %-2:c%?-12t% s ")
+      	;;(agenda  . " [%(fd/agenda-roam-name)] %-12:c%?-12t% s ")
+      	(timeline  . "  [%(fd/agenda-roam-name)]% s ")
+      	(todo  . " [%(fd/agenda-roam-name)] %-12:c ")
+      	(tags  . " [%(fd/agenda-roam-name)] %-12:c ")
+      	(search . " [%(fd/agenda-roam-name)] %-12:c ")
+      ))
+      (setq org-element-use-cache nil)
+      (setq org-link-file-path-type 'relative)
 #+end_src
 *** Agenda
 **** Status tasks
 #+begin_src emacs-lisp
 (setq string-todos '("TODO" "ACTIVE" "DONE" "HOLD" "CANCELED"))
 (setq locregex (string-join string-todos "|"))
-(setq org-agenda-base org-base)
-(setq org-agenda-files  (my/update-agenda))
+;;(setq org-agenda-base (concat dropbox-base "OrgBase"));;org-base)
+(setq org-agenda-base (concat dropbox-base "Org"));;org-base)
+(setq org-agenda-files  (directory-files-recursively org-agenda-base "\\.org$"));;(my/update-agenda))
 (setq org-todo-keywords
       '((sequence "TODO(t@)" "ACTIVE(a@)" "|" "DONE(d@)") ;;   Generali
         (sequence  "|" "HOLD(h@)" "CANCELED(c@)")
@@ -755,8 +707,8 @@ Fast selection of the nodes with a TODO heading.
         (:endgroup)
         ("note" . ?n)
         ("idea" . ?i)))
-(advice-add 'org-agenda :before #'my/update-agenda)
-(advice-add 'org-todo-list :before #'my/update-agenda)
+;;(advice-add 'org-agenda :before #'my/update-agenda)
+;;(advice-add 'org-todo-list :before #'my/update-agenda)
 #+end_src
 **** Views
 #+begin_src emacs-lisp
@@ -815,8 +767,8 @@ Updated version of the base agenda with entry grouping.
   )
 #+end_src
 ** Table-of-contents
-A module to generate a markdown-friendly TOC.
-#+begin_src emacs-lisp
+A module to generate a markdown-friendly TOC. No need for it, I'd rather have a toc for ORG files in emacs.
+#+begin_src emacs-lisp :tangle no
 (use-package toc-org
   :ensure t
   :after org
@@ -833,13 +785,36 @@ Keybindings : C+M+- and C+M+=.
   (default-text-scale-mode))
 #+end_src
 *** Markup
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package org-appear
   :ensure
   :hook (org-mode . org-appear-mode))
 #+end_src
 * Calendar
+#+begin_src emacs-lisp
+(defun my-open-calendar ()
+  (interactive)
+  (cfw:open-calendar-buffer
+   :contents-sources
+   (list
+    (cfw:org-create-source "Green")  ; orgmode source
+    ;;(cfw:howm-create-source "Blue")  ; howm source
+    ;;(cfw:cal-create-source "Orange") ; diary source
+    ;;(cfw:ical-create-source "Moon" "~/moon.ics" "Gray")  ; ICS source1
+    ;;(cfw:ical-create-source "gcal" "https://..../basic.ics" "IndianRed") ; google calendar ICS
+   )))
 
+(use-package calfw
+  :ensure
+  :defer t
+  )
+(use-package calfw-org)
+#+end_src
+** Google Sync
+#+begin_src emacs-lisp :tangle no
+(use-package org-gcal
+  )
+#+end_src
 * File browsing
 ** Dired
 A better file manager. The setup on MacOS requires:
@@ -920,7 +895,7 @@ A better file manager. The setup on MacOS requires:
   :defer t)
    #+end_src
 *** Keybinds
-   #+begin_src emacs-lisp
+ #+begin_src emacs-lisp
 (evil-collection-define-key 'normal 'dired-mode-map
   "h" 'dired-single-up-directory
   "H" 'dired-omit-mode
@@ -928,7 +903,15 @@ A better file manager. The setup on MacOS requires:
   "y" 'dired-ranger-copy
   "X" 'dired-ranger-move
   "p" 'dired-ranger-paste)
-   #+end_src
+#+end_src
+** Dirvish
+#+begin_src emacs-lisp
+ (use-package dirvish
+  :ensure t
+  :init
+  ;; Let Dirvish take over Dired globally
+  (dirvish-override-dired-mode))
+#+end_src
 ** OpenFile
 Open all files automatically with find-files, dired requires the "!" keybind instead.
    #+begin_src emacs-lisp
@@ -958,7 +941,7 @@ Open all files automatically with find-files, dired requires the "!" keybind ins
                '(file)))))
    #+end_src
 * Org roam
-The best part of Emacs.
+The best part of Emacs, if used with caution.
 ** Additional functions
 ** Config
 *** Init
@@ -966,7 +949,6 @@ The best part of Emacs.
 (use-package org-roam
   :ensure t
   :after org
-  :defer 2
   :custom
   (org-roam-directory org-base)
   (org-roam-completion-everywhere t)
@@ -1008,7 +990,8 @@ The best part of Emacs.
 #+end_src
 
 * Ledger
-#+begin_src emacs-lisp
+Trying GNUCash right now.
+#+begin_src emacs-lisp :tangle no
 (use-package ledger-mode
   :ensure t
   :mode ("\\.dat\\'"
@@ -1018,7 +1001,7 @@ The best part of Emacs.
   )
 #+end_src
 ** Evil Ledger
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package evil-ledger
   :ensure t
   :after ledger-mode
@@ -1046,7 +1029,7 @@ The best part of Emacs.
   )
 #+end_src
 ** Org-Noter
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package org-noter
   :ensure t
   :after (:any org pdf-view)
@@ -1202,6 +1185,7 @@ Open links to the base repo with a single keybind.
     (persp-mode)))
 #+end_src
 * LSP
+Nope, too much setup time for something simple.
 ** Eglot
 A package that should work out-of-the-box with lsp servers, but doesn't. Virtualenvs are hard to setup.
 #+begin_src emacs-lisp :tangle no
@@ -1285,7 +1269,7 @@ Simple presentations with Org.
 * Programming
 ** Python
 *** IDE
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package elpy
   :ensure t
   :defer t

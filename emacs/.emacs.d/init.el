@@ -379,37 +379,56 @@
   :config
   (global-company-mode))
 
-(defun my/agenda-fetch ()
-  ;;(interactive)
-  (split-string
-   (shell-command-to-string (concat "rg --type org '" locregex "' " org-agenda-base " -l "))
-   "\n")
-  )
-(defun my/update-agenda (&rest _)
-  ;;(interactive)
-  (setq org-agenda-files (my/agenda-fetch))
-  (push agenda-base org-agenda-files))
+(defun fd/refresh-org-agenda-files ()
+       (interactive)
+       (setq org-agenda-files (directory-files-recursively org-agenda-base "\\.org$")))
 
-(defun cst-org ()
-  (org-indent-mode)
-  (visual-line-mode 1)
-  )
+(defun fd/agenda-above-folder ()
+      "Give the directory of (buffer-file-name), and replace the home path by '~'"
+      (interactive)
+      (string-replace "/" ""
+      (string-replace org-agenda-base ""
+		      ;;(concat "~/" (file-name-directory (file-relative-name (buffer-file-name) (expand-file-name "~"))))
+		      (file-name-directory buffer-file-name)
+      )
+      )
+    )
+(use-package cl-lib)
+(defun fd/agenda-roam-name ()
+      (interactive)
+  (replace-regexp-in-string "\\([0-9]+\\)-" "" (file-name-base buffer-file-name))
+    )
+
+    (defun cst-org ()
+	  (org-indent-mode)
+	  (visual-line-mode 1)
+     )
 (use-package org
-  :straight nil
-  :ensure nil
-  :mode ("\\.org\\'" . org-mode)
-  :defer
-  :init
-  (add-hook 'org-mode-hook 'cst-org)
-  :custom
-  (org-directory org-base)
-  :config
-  (setq org-link-file-path-type 'relative)
+      :straight nil
+      :ensure nil
+      :mode ("\\.org\\'" . org-mode)
+      :defer
+      :init
+      (add-hook 'org-mode-hook 'cst-org)
+      :custom
+      (org-directory org-base)
+      :config
+      (setq org-agenda-prefix-format '(
+      	(agenda  . " [%(fd/agenda-roam-name)] %-2:c%?-12t% s ")
+      	;;(agenda  . " [%(fd/agenda-roam-name)] %-12:c%?-12t% s ")
+      	(timeline  . "  [%(fd/agenda-roam-name)]% s ")
+      	(todo  . " [%(fd/agenda-roam-name)] %-12:c ")
+      	(tags  . " [%(fd/agenda-roam-name)] %-12:c ")
+      	(search . " [%(fd/agenda-roam-name)] %-12:c ")
+      ))
+      (setq org-element-use-cache nil)
+      (setq org-link-file-path-type 'relative)
 
 (setq string-todos '("TODO" "ACTIVE" "DONE" "HOLD" "CANCELED"))
 (setq locregex (string-join string-todos "|"))
-(setq org-agenda-base org-base)
-(setq org-agenda-files  (my/update-agenda))
+;;(setq org-agenda-base (concat dropbox-base "OrgBase"));;org-base)
+(setq org-agenda-base (concat dropbox-base "Org"));;org-base)
+(setq org-agenda-files  (directory-files-recursively org-agenda-base "\\.org$"));;(my/update-agenda))
 (setq org-todo-keywords
       '((sequence "TODO(t@)" "ACTIVE(a@)" "|" "DONE(d@)") ;;   Generali
         (sequence  "|" "HOLD(h@)" "CANCELED(c@)")
@@ -420,8 +439,8 @@
         (:endgroup)
         ("note" . ?n)
         ("idea" . ?i)))
-(advice-add 'org-agenda :before #'my/update-agenda)
-(advice-add 'org-todo-list :before #'my/update-agenda)
+;;(advice-add 'org-agenda :before #'my/update-agenda)
+;;(advice-add 'org-todo-list :before #'my/update-agenda)
 
 (setq org-agenda-custom-commands nil)
 (setq org-agenda-custom-commands
@@ -466,20 +485,28 @@
           ))
   )
 
-(use-package toc-org
-  :ensure t
-  :after org
-  :defer t
-  )
-
 (use-package default-text-scale
   :defer 1
   :config
   (default-text-scale-mode))
 
-(use-package org-appear
+(defun my-open-calendar ()
+  (interactive)
+  (cfw:open-calendar-buffer
+   :contents-sources
+   (list
+    (cfw:org-create-source "Green")  ; orgmode source
+    ;;(cfw:howm-create-source "Blue")  ; howm source
+    ;;(cfw:cal-create-source "Orange") ; diary source
+    ;;(cfw:ical-create-source "Moon" "~/moon.ics" "Gray")  ; ICS source1
+    ;;(cfw:ical-create-source "gcal" "https://..../basic.ics" "IndianRed") ; google calendar ICS
+   )))
+
+(use-package calfw
   :ensure
-  :hook (org-mode . org-appear-mode))
+  :defer t
+  )
+(use-package calfw-org)
 
 (use-package all-the-icons-dired
   :ensure) ;; Forse da limitare su terminale?
@@ -557,6 +584,12 @@
   "X" 'dired-ranger-move
   "p" 'dired-ranger-paste)
 
+ (use-package dirvish
+  :ensure t
+  :init
+  ;; Let Dirvish take over Dired globally
+  (dirvish-override-dired-mode))
+
 (use-package openwith
   :disabled
   :ensure
@@ -585,7 +618,6 @@
 (use-package org-roam
   :ensure t
   :after org
-  :defer 2
   :custom
   (org-roam-directory org-base)
   (org-roam-completion-everywhere t)
@@ -621,21 +653,6 @@
         org-roam-ui-update-on-save t
         org-roam-ui-open-on-start t))
 
-(use-package ledger-mode
-  :ensure t
-  :mode ("\\.dat\\'"
-         "\\.ledger\\'")
-  :config
-  (add-hook 'ledger-mode-hook #'ledger-flymake-enable)
-  )
-
-(use-package evil-ledger
-  :ensure t
-  :after ledger-mode
-  :config
-  (setq evil-ledger-sort-key "S")
-  (add-hook 'ledger-mode-hook #'evil-ledger-mode))
-
 (use-package citar
   :ensure
   :defer t
@@ -651,17 +668,6 @@
         (link ,(all-the-icons-octicon "link" :face 'all-the-icons-orange :v-adjust 0.01) . " ")))
     (setq citar-symbol-separator "  "))
   )
-
-(use-package org-noter
-  :ensure t
-  :after (:any org pdf-view)
-  :defer t
-  :config
-  (setq org-noter-notes-window-location 'other-frame
-        org-noter-notes-search-path '(pdf-base)
-        org-noter-hide-other nil
-        org-noter-auto-save-last-location t
-        ))
 
 (use-package org-ref
   :ensure
@@ -733,12 +739,6 @@
   )
 
 
-
-(use-package elpy
-  :ensure t
-  :defer t
-  :init
-  (advice-add 'python-mode :before 'elpy-enable))
 
 (use-package elfeed
   :ensure t
