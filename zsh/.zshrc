@@ -83,9 +83,9 @@ plugins=(git themes vi-mode
 source $ZSH/oh-my-zsh.sh
 # Truecolor for emacs in tmux
 # Follow the guide here: https://github.com/syl20bnr/spacemacs/wiki/Terminal
-if [[ `uname` == "Linux" ]]; then
-        export TERM=xterm-24bit
-fi
+#if [[ `uname` == "Linux" ]]; then
+#        export TERM=xterm-24bit
+#fi
 alias ssh="TERM=xterm-256color ssh"
 
 # User configuration
